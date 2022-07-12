@@ -1,0 +1,5 @@
+../Core/Src/servo.c:20:6:Servo_Init	8	static
+../Core/Src/servo.c:42:6:Check_Servos_Manually	24	static
+../Core/Src/servo.c:59:6:Set_Servos_Into_Default_Position	4	static
+../Core/Src/servo.c:71:6:_Move_Servo	24	static
+../Core/Src/servo.c:109:6:__Test_Servos	8	static

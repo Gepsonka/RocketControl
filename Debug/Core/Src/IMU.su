@@ -1,0 +1,2 @@
+../Core/Src/IMU.c:19:22:Identify_GY91	40	static
+../Core/Src/IMU.c:36:19:MPU9250_Write_Gyro_Full_Scale_Range	40	static
