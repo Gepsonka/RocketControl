@@ -12,12 +12,14 @@
 
 #include "tim.h"
 
+#define NUM_OF_SERVO_MOTORS 4
+
 typedef enum {
-	INLINE = 150, // Fins are parallel with the rocket, default position
-	LOWEST_ENABLED_PITCH = 125,  // -45 DEG
-	HIGHEST_ENABLED_PICH = 175,   // +45 DEG
-	LOWEST_PITCH = 100, // -90 DEG
-	HIGHEST_PITCH = 200 // +90 DEG
+	INLINE_DUTY_CYCLE = 150, // Fins are parallel with the rocket, default position
+	LOWEST_ENABLED_PITCH_DUTY_CYCLE = 125,  // -45 DEG
+	HIGHEST_ENABLED_PICH_DUTY_CYCLE = 175,   // +45 DEG
+	LOWEST_PITCH_DUTY_CYCLE = 100, // -90 DEG
+	HIGHEST_PITCH_DUTY_CYCLE = 200 // +90 DEG
 } PitchesDutyCycle;
 
 typedef enum {
