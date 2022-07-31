@@ -8,12 +8,23 @@
 
 #include "IMU.h"
 
+uint16_t _accel_scale_factor;
+
+float _gyro_scale_factor;
+
+float _self_test_result[6];
+
+float _gyro_bias[3];
+
+float _accel_bias[3];
+
+
 /*
  * For more info on self-testing:
  * https://github.com/kriswiner/MPU9250/blob/master/Documents/AN-MPU-9250A-03%20MPU-9250%20Accel%20Gyro%20and%20Compass%20Self-Test%20Implementation%20v1%200_062813.pdf
  */
 void Self_Test(){
-
+	uint8_t i;
 	uint8_t raw_data[6] = {0, 0, 0, 0, 0, 0};
 	uint8_t self_test[6];
 	int32_t gyroAVG[3] = {0};
@@ -21,29 +32,30 @@ void Self_Test(){
 	int32_t accelAVG[3] = {0};
 	int32_t accel_self_testAVG[3] = {0};
 	float factory_trim[6];
-	uint8_t FS;
+	uint8_t FS = 0;
+	HAL_StatusTypeDef status;
 
 	// Set gyro sample rate to 1kHz
-	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, SMPLRT_DIV, 1, (uint8_t*)(0x00), 1, HAL_MAX_DELAY);
+	status = HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, SMPLRT_DIV, 1, (uint8_t*)(0x00), 1, HAL_MAX_DELAY);
 	// Set DLFP to 92Hz
-	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, CONFIG, 1, (uint8_t*)(0x02), 1, HAL_MAX_DELAY);
+	status = HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, CONFIG, 1, (uint8_t*)(0x02), 1, HAL_MAX_DELAY);
 	// Set full scale range of the gyro to 250 dps
-	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, GYRO_CONFIG, 1, (uint8_t*)(1<<FS), 1, HAL_MAX_DELAY);
+	status = HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, GYRO_CONFIG, 1, (uint8_t*)(1<<FS), 1, HAL_MAX_DELAY);
 	// Set accel rate to 1kHz and bandwidth to 92Hz
-	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, ACCEL_CONFIG, 1, (uint8_t*)(0x02), 1, HAL_MAX_DELAY);
+	status = HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, ACCEL_CONFIG, 1, (uint8_t*)(0x02), 1, HAL_MAX_DELAY);
 	// Set accel full scale range to 2G
-	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, ACCEL_CONFIG, 1, (uint8_t*)(1<<FS), 1, HAL_MAX_DELAY);
+	status = HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, ACCEL_CONFIG, 1, (uint8_t*)(1<<FS), 1, HAL_MAX_DELAY);
 
 
 	// Calculate data needed to get the average
-	for(int i=0; i<200; i++){
+	for(i=0; i<200; i++){
 		// Reading accel data registers
-		HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, ACCEL_XOUT_H, 6, &raw_data[0], 6, HAL_MAX_DELAY);
+		HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, ACCEL_XOUT_H, 1, &raw_data[0], 6, HAL_MAX_DELAY);
 		accelAVG[0] += (int16_t) (((int16_t)raw_data[0] << 8) | raw_data[1]);
 		accelAVG[1] += (int16_t) (((int16_t)raw_data[2] << 8) | raw_data[3]);
 		accelAVG[2] += (int16_t) (((int16_t)raw_data[4] << 8) | raw_data[5]);
 
-		HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, GYRO_XOUT_H, 6, &raw_data[0], 6, HAL_MAX_DELAY);
+		HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, GYRO_XOUT_H, 1, &raw_data[0], 6, HAL_MAX_DELAY);
 		gyroAVG[0] += (int16_t) (((int16_t)raw_data[0] << 8) | raw_data[1]);
 		gyroAVG[1] += (int16_t) (((int16_t)raw_data[2] << 8) | raw_data[3]);
 		gyroAVG[2] += (int16_t) (((int16_t)raw_data[4] << 8) | raw_data[5]);
@@ -64,12 +76,12 @@ void Self_Test(){
 	// Calculate data needed to get the average (self-test)
 	for(int i=0; i<200; i++){
 		// Reading accel data registers
-		HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, ACCEL_XOUT_H, 6, &raw_data[0], 6, HAL_MAX_DELAY);
+		HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, ACCEL_XOUT_H, 1, &raw_data[0], 6, HAL_MAX_DELAY);
 		accel_self_testAVG[0] += (int16_t) (((int16_t)raw_data[0] << 8) | raw_data[1]);
 		accel_self_testAVG[1] += (int16_t) (((int16_t)raw_data[2] << 8) | raw_data[3]);
 		accel_self_testAVG[2] += (int16_t) (((int16_t)raw_data[4] << 8) | raw_data[5]);
 
-		HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, GYRO_XOUT_H, 6, &raw_data[0], 6, HAL_MAX_DELAY);
+		HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, GYRO_XOUT_H, 1, &raw_data[0], 6, HAL_MAX_DELAY);
 		gyro_self_testAVG[0] += (int16_t) (((int16_t)raw_data[0] << 8) | raw_data[1]);
 		gyro_self_testAVG[1] += (int16_t) (((int16_t)raw_data[2] << 8) | raw_data[3]);
 		gyro_self_testAVG[2] += (int16_t) (((int16_t)raw_data[4] << 8) | raw_data[5]);
@@ -169,7 +181,7 @@ void Calibrate_MPU9250(){
 	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, FIFO_EN, 1, (uint8_t*)(0x00), 1, HAL_MAX_DELAY);
 	// Read FIFO sample count
 	HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, FIFO_COUNTH, 1, &raw_data[0], 6, HAL_MAX_DELAY);
-	fifo_count = ((uint16_t)data[0] << 8) | data[1];
+	fifo_count = ((uint16_t)raw_data[0] << 8) | raw_data[1];
 	packet_count = (uint16_t)(fifo_count / 12); // How many sets of full gyro and accelerometer data for averaging
 
 	for (int i=0; i<packet_count; i++){
@@ -202,8 +214,8 @@ void Calibrate_MPU9250(){
 	gyro_bias[2]  /= (int32_t) packet_count;
 
 	// Remove gravity from the z-axis accelerometer bias calculation
-	if(accel_bias[2] > 0L) {accel_bias[2] -= (int32_t) accelsensitivity;}
-	else {accel_bias[2] += (int32_t) accelsensitivity;}
+	if(accel_bias[2] > 0L) {accel_bias[2] -= (int32_t) accel_sensitivity;}
+	else {accel_bias[2] += (int32_t) accel_sensitivity;}
 
 	// Construct the gyro biases for push to the hardware gyro bias registers, which are reset to zero upon device startup
 	raw_data[0] = (-gyro_bias[0]/4  >> 8) & 0xFF; // Divide by 4 to get 32.9 LSB per deg/s to conform to expected bias input format
@@ -223,9 +235,9 @@ void Calibrate_MPU9250(){
 
 
 	// Store scaled gyro bias
-	_gyro_bias[0] = (float) gyro_bias[0]/(float) gyrosensitivity;
-	_gyro_bias[1] = (float) gyro_bias[1]/(float) gyrosensitivity;
-	_gyro_bias[2] = (float) gyro_bias[2]/(float) gyrosensitivity;
+	_gyro_bias[0] = (float) gyro_bias[0]/(float) gyro_sensitivity;
+	_gyro_bias[1] = (float) gyro_bias[1]/(float) gyro_sensitivity;
+	_gyro_bias[2] = (float) gyro_bias[2]/(float) gyro_sensitivity;
 
 
 	// Construct the accelerometer biases for push to the hardware accelerometer bias registers. These registers contain
@@ -266,9 +278,9 @@ void Calibrate_MPU9250(){
 	raw_data[5] = raw_data[5] | mask_bit[2]; // preserve temperature compensation bit when writing back to accelerometer bias registers
 
 	// Output scaled accelerometer biases for display in the main program
-	_accel_bias[0] = (float)accel_bias[0]/(float)accelsensitivity;
-	_accel_bias[1] = (float)accel_bias[1]/(float)accelsensitivity;
-	_accel_bias[2] = (float)accel_bias[2]/(float)accelsensitivity;
+	_accel_bias[0] = (float)accel_bias[0]/(float) accel_sensitivity;
+	_accel_bias[1] = (float)accel_bias[1]/(float) accel_sensitivity;
+	_accel_bias[2] = (float)accel_bias[2]/(float) accel_sensitivity;
 
 
 }

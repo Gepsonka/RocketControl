@@ -246,15 +246,7 @@ typedef struct {
 } SensorRawData;
 
 
-uint16_t _accel_scale_factor;
 
-float _gyro_scale_factor;
-
-float _self_test_result[6];
-
-float _gyro_bias[3];
-
-float _accel_bias[3];
 
 void Self_Test();
 

@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include "servo.h"
 #include "stdio.h"
+#include "IMU.h"
 
 /* USER CODE END Includes */
 
@@ -95,9 +96,16 @@ int main(void)
   /* USER CODE BEGIN 2 */
   Servo_Init();
 
-  printf("started");
+  //Check_Servos_Manually();
 
-  Check_Servos_Manually();
+  uint8_t raw_data[8];
+  HAL_StatusTypeDef a = HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, ACCEL_XOUT_H, 1, &raw_data[0], 6, HAL_MAX_DELAY);
+  int32_t accel_bias_reg = (int32_t) (((int16_t)raw_data[0] << 8) | raw_data[1]);
+
+
+
+  Self_Test();
+  Calibrate_MPU9250();
 
 
   /* USER CODE END 2 */
@@ -107,7 +115,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  HAL_Delay(1000);
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
