@@ -146,11 +146,129 @@ void Calibrate_MPU9250(){
 	// Configure MPU6050 gyro and accelerometer for bias calculation
 	// Set low-pass filter to 188Hz
 	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, CONFIG, 1, (uint8_t*)(0x01), 1, HAL_MAX_DELAY);
-	// Disable FIFO
-	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, FIFO_EN, 1, (uint8_t*)(0x00), 1, HAL_MAX_DELAY);
-	// Turn on internal clock
-	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, PWR_MGMT_1, 1, (uint8_t*)(0x00), 1, HAL_MAX_DELAY);
+	// Set sample rate to 1kHz
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, SMPLRT_DIV, 1, (uint8_t*)(0x00), 1, HAL_MAX_DELAY);
+	// Set gyro full-scale to 250 degrees per second
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, GYRO_CONFIG, 1, (uint8_t*)(0x00), 1, HAL_MAX_DELAY);
+	// Set accelerometer full-scale to 2 g
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, ACCEL_CONFIG, 1, (uint8_t*)(0x00), 1, HAL_MAX_DELAY);
 
+	uint16_t gyro_sensitivity = 131; // 131 LSB/degrees/sec
+	uint16_t accel_sensitivity = 16384; // 16384 LSB/g
+
+	// Configure FIFO to capture accelerometer and gyro data for bias calculation
+	// Enable FIFO
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, USER_CTRL, 1, (uint8_t*)(0x40), 1, HAL_MAX_DELAY);
+	// Enable gyro and accelerometer sensors for FIFO
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, FIFO_EN, 1, (uint8_t*)(0x78), 1, HAL_MAX_DELAY);
+	HAL_Delay(40); // accumulate 40 samples in 40 milliseconds = 480 bytes
+
+
+	// At end of sample accumulation, turn off FIFO sensor read
+	// Disable gyro and accel sensors for FIFO
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, FIFO_EN, 1, (uint8_t*)(0x00), 1, HAL_MAX_DELAY);
+	// Read FIFO sample count
+	HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, FIFO_COUNTH, 1, &raw_data[0], 6, HAL_MAX_DELAY);
+	fifo_count = ((uint16_t)data[0] << 8) | data[1];
+	packet_count = (uint16_t)(fifo_count / 12); // How many sets of full gyro and accelerometer data for averaging
+
+	for (int i=0; i<packet_count; i++){
+		int16_t accel_temp[3] = {0, 0, 0};
+		int16_t gyro_temp[3] = {0, 0, 0};
+
+		HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, FIFO_R_W, 1, &raw_data[0], 12, HAL_MAX_DELAY);
+		accel_temp[0] = (int16_t) (((int16_t)raw_data[0] << 8) | raw_data[1]  ) ;  // Form signed 16-bit integer for each sample in FIFO
+		accel_temp[1] = (int16_t) (((int16_t)raw_data[2] << 8) | raw_data[3]  ) ;
+		accel_temp[2] = (int16_t) (((int16_t)raw_data[4] << 8) | raw_data[5]  ) ;
+		gyro_temp[0]  = (int16_t) (((int16_t)raw_data[6] << 8) | raw_data[7]  ) ;
+		gyro_temp[1]  = (int16_t) (((int16_t)raw_data[8] << 8) | raw_data[9]  ) ;
+		gyro_temp[2]  = (int16_t) (((int16_t)raw_data[10] << 8) | raw_data[11]) ;
+
+		// Sum individual signed 16-bit biases to get accumulated signed 32-bit biases
+		accel_bias[0] += (int32_t) accel_temp[0];
+		accel_bias[1] += (int32_t) accel_temp[1];
+		accel_bias[2] += (int32_t) accel_temp[2];
+		gyro_bias[0]  += (int32_t) gyro_temp[0];
+		gyro_bias[1]  += (int32_t) gyro_temp[1];
+		gyro_bias[2]  += (int32_t) gyro_temp[2];
+	}
+
+	// Normalize sums to get average count biases
+	accel_bias[0] /= (int32_t) packet_count;
+	accel_bias[1] /= (int32_t) packet_count;
+	accel_bias[2] /= (int32_t) packet_count;
+	gyro_bias[0]  /= (int32_t) packet_count;
+	gyro_bias[1]  /= (int32_t) packet_count;
+	gyro_bias[2]  /= (int32_t) packet_count;
+
+	// Remove gravity from the z-axis accelerometer bias calculation
+	if(accel_bias[2] > 0L) {accel_bias[2] -= (int32_t) accelsensitivity;}
+	else {accel_bias[2] += (int32_t) accelsensitivity;}
+
+	// Construct the gyro biases for push to the hardware gyro bias registers, which are reset to zero upon device startup
+	raw_data[0] = (-gyro_bias[0]/4  >> 8) & 0xFF; // Divide by 4 to get 32.9 LSB per deg/s to conform to expected bias input format
+	raw_data[1] = (-gyro_bias[0]/4)       & 0xFF; // Biases are additive, so change sign on calculated average gyro biases
+	raw_data[2] = (-gyro_bias[1]/4  >> 8) & 0xFF;
+	raw_data[3] = (-gyro_bias[1]/4)       & 0xFF;
+	raw_data[4] = (-gyro_bias[2]/4  >> 8) & 0xFF;
+	raw_data[5] = (-gyro_bias[2]/4)       & 0xFF;
+
+	// Push gyro biases to hardware registers
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, XG_OFFSET_H, 1, &raw_data[0], 1, HAL_MAX_DELAY);
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, XG_OFFSET_L, 1, &raw_data[1], 1, HAL_MAX_DELAY);
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, YG_OFFSET_H, 1, &raw_data[2], 1, HAL_MAX_DELAY);
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, YG_OFFSET_L, 1, &raw_data[3], 1, HAL_MAX_DELAY);
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, ZG_OFFSET_H, 1, &raw_data[4], 1, HAL_MAX_DELAY);
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, ZG_OFFSET_L, 1, &raw_data[5], 1, HAL_MAX_DELAY);
+
+
+	// Store scaled gyro bias
+	_gyro_bias[0] = (float) gyro_bias[0]/(float) gyrosensitivity;
+	_gyro_bias[1] = (float) gyro_bias[1]/(float) gyrosensitivity;
+	_gyro_bias[2] = (float) gyro_bias[2]/(float) gyrosensitivity;
+
+
+	// Construct the accelerometer biases for push to the hardware accelerometer bias registers. These registers contain
+	// factory trim values which must be added to the calculated accelerometer biases; on boot up these registers will hold
+	// non-zero values. In addition, bit 0 of the lower byte must be preserved since it is used for temperature
+	// compensation calculations. Accelerometer bias registers expect bias input as 2048 LSB per g, so that
+	// the accelerometer biases calculated above must be divided by 8.
+	int32_t accel_bias_reg[3] = {0, 0, 0};
+	HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, XA_OFFSET_H, 1, &raw_data[0], 2, HAL_MAX_DELAY);
+	accel_bias_reg[0] = (int32_t) (((int16_t)raw_data[0] << 8) | raw_data[1]);
+	HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, YA_OFFSET_H, 1, &raw_data[0], 2, HAL_MAX_DELAY);
+	accel_bias_reg[1] = (int32_t) (((int16_t)raw_data[0] << 8) | raw_data[1]);
+	HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, ZA_OFFSET_H, 1, &raw_data[0], 2, HAL_MAX_DELAY);
+	accel_bias_reg[2] = (int32_t) (((int16_t)raw_data[0] << 8) | raw_data[1]);
+
+	uint32_t mask = 1uL; // Define mask for temperature compensation bit 0 of lower byte of accelerometer bias registers
+	uint8_t mask_bit[3] = {0, 0, 0}; // Define array to hold mask bit for each accelerometer bias axis
+
+
+	for(ii = 0; ii < 3; ii++) {
+		// If temperature compensation bit is set, record that fact in mask_bit
+		if((accel_bias_reg[ii] & mask)) mask_bit[ii] = 0x01;
+	}
+
+	// Construct total accelerometer bias, including calculated average accelerometer bias from above
+	accel_bias_reg[0] -= (accel_bias[0]/8); // Subtract calculated averaged accelerometer bias scaled to 2048 LSB/g (16 g full scale)
+	accel_bias_reg[1] -= (accel_bias[1]/8);
+	accel_bias_reg[2] -= (accel_bias[2]/8);
+
+	raw_data[0] = (accel_bias_reg[0] >> 8) & 0xFF;
+	raw_data[1] = (accel_bias_reg[0])      & 0xFF;
+	raw_data[1] = raw_data[1] | mask_bit[0]; // preserve temperature compensation bit when writing back to accelerometer bias registers
+	raw_data[2] = (accel_bias_reg[1] >> 8) & 0xFF;
+	raw_data[3] = (accel_bias_reg[1])      & 0xFF;
+	raw_data[3] = raw_data[3] | mask_bit[1]; // preserve temperature compensation bit when writing back to accelerometer bias registers
+	raw_data[4] = (accel_bias_reg[2] >> 8) & 0xFF;
+	raw_data[5] = (accel_bias_reg[2])      & 0xFF;
+	raw_data[5] = raw_data[5] | mask_bit[2]; // preserve temperature compensation bit when writing back to accelerometer bias registers
+
+	// Output scaled accelerometer biases for display in the main program
+	_accel_bias[0] = (float)accel_bias[0]/(float)accelsensitivity;
+	_accel_bias[1] = (float)accel_bias[1]/(float)accelsensitivity;
+	_accel_bias[2] = (float)accel_bias[2]/(float)accelsensitivity;
 
 
 }
