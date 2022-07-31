@@ -1,2 +1,6 @@
-../Core/Src/IMU.c:19:22:Identify_GY91	40	static
-../Core/Src/IMU.c:36:19:MPU9250_Write_Gyro_Full_Scale_Range	40	static
+../Core/Src/IMU.c:15:6:Self_Test	144	static
+../Core/Src/IMU.c:115:6:Calibrate_MPU9250	64	static
+../Core/Src/IMU.c:159:6:Init_MPU9250	4	static
+../Core/Src/IMU.c:164:9:get_MPU9250_ID	32	static
+../Core/Src/IMU.c:170:9:get_AK8963_ID	32	static
+../Core/Src/IMU.c:189:19:MPU9250_Write_Gyro_Full_Scale_Range	40	static

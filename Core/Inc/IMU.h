@@ -9,10 +9,11 @@
 #define INC_IMU_H_
 
 #include <stdint.h>
+#include <math.h>
 
 #include "i2c.h"
 
-#define AK8963_ADDRESS   0x0C<<1
+#define AK8963_ADDRESS   0x0C
 #define AK8963_WHO_AM_I  0x00 // should return 0x48
 #define AK8963_WHO_AM_I_SUPPOSED_TO 0x48
 #define AK8963_INFO      0x01
@@ -161,7 +162,7 @@
 
 // Using the MSENSR-9250 breakout board, ADO is set to 0
 // Seven-bit device address is 110100 for ADO = 0 and 110101 for ADO = 1
-//mbed uses the eight-bit device address, so shift seven-bit addresses left by one!
+// mbed uses the eight-bit device address, so shift seven-bit addresses left by one!
 #define ADO 0
 #if ADO
 #define MPU9250_ADDRESS 0x69<<1  // Device address when ADO = 1
@@ -178,13 +179,15 @@
 #define ACCEL_SF_16G 2048
 
 
-
+/*
+ * Gyro measure range
+ */
 #define	GYRO_SF_250DPS 131
 #define	GYRO_SF_500DPS 65.5
 #define	GYRO_SF_1000DPS 32.8
 #define	GYRO_SF_2000DPS 16.4
 
-// Set initial input parameters
+// Accelerometer
 typedef enum {
   AFS_2G = 0,
   AFS_4G,
@@ -210,74 +213,6 @@ typedef enum {
   MFS_16BITS      // 0.15 mG per LSB
 }Mscale;
 
-/*
- * GY91 device identification status
- */
-typedef enum {
-	IDENTIFY_OK = 0,
-	IDENTIFY_BAD_DEVICE = 1,
-	IDENTIFY_I2C_ERROR = 2
-
-} IdentificationStatus;
-
-/*
-There always be a test before system start that the
-gyro, accel and the magnetometer works fine.
- */
-typedef struct  {
-	uint16_t selfTestXGyro;
-	uint16_t selfTestYGyro;
-	uint16_t selfTestZGyro;
-} GyroTest;
-
-typedef struct {
-	uint16_t selfTestXAccel;
-	uint16_t selfTestYAccel;
-	uint16_t selfTestZAccel;
-} AccelTest;
-
-typedef struct {
-	uint16_t selfTestXMagnet;
-	uint16_t selfTestYMagnet;
-	uint16_t selfTestZMagnet;
-} MagnetTest;
-
-typedef struct {
-	GyroTest gyroTest;
-	AccelTest accelTest;
-	MagnetTest magnetTest;
-} SelfTest;
-
-
-/*
- * Calibration data
- */
-typedef struct  {
-	uint16_t calibXgyro;
-	uint16_t calibYgyro;
-	uint16_t calibZgyro;
-} GyroCalib;
-
-typedef struct  {
-	uint16_t calibXaccel;
-	uint16_t calibYaccel;
-	uint16_t calibZaccel;
-} AccelCalib;
-
-
-typedef struct{
-	uint16_t calibXMagnet;
-	uint16_t calibYMagnet;
-	uint16_t calibZMagnet;
-} MagnetCalib;
-
-
-
-typedef struct {
-	GyroCalib gyroCalib;
-	AccelCalib accelCalib;
-	MagnetCalib magnetCalib;
-}Calibration;
 
 
 
@@ -287,21 +222,21 @@ typedef struct {
  * Raw data from sensor
  */
 typedef struct {
-	uint16_t rawXGyro;
-	uint16_t rawyGyro;
-	uint16_t rawzGyro;
+	int16_t rawXGyro;
+	int16_t rawyGyro;
+	int16_t rawzGyro;
 } GyroRaw;
 
 typedef struct  {
-	uint16_t rawXAccel;
-	uint16_t rawYAccel;
-	uint16_t rawZAccel;
+	int16_t rawXAccel;
+	int16_t rawYAccel;
+	int16_t rawZAccel;
 } AccelRaw;
 
 typedef struct {
-	uint16_t rawXMagnet;
-	uint16_t rawYMagnet;
-	uint16_t rawZMagnet;
+	int16_t rawXMagnet;
+	int16_t rawYMagnet;
+	int16_t rawZMagnet;
 } MagnetRaw;
 
 typedef struct {
@@ -311,19 +246,30 @@ typedef struct {
 } SensorRawData;
 
 
-HAL_StatusTypeDef Test_GY91(I2C_HandleTypeDef* i2c_interface);
+uint16_t _accel_scale_factor;
+
+float _gyro_scale_factor;
+
+float _self_test_result[6];
+
+float _gyro_bias[3];
+
+float _accel_bias[3];
+
+void Self_Test();
+
+void Calibrate_MPU9250();
+
+void Init_MPU9250();
 
 
-IdentificationStatus Identify_GY91(I2C_HandleTypeDef* i2c_interface);
 
-HAL_StatusTypeDef MPU9250_Write_Gyro_Full_Scale_Range(I2C_HandleTypeDef* i2c_interface, Gscale gscale);
-HAL_StatusTypeDef MPU9250_Write_Accel_Full_Scale_Range(I2C_HandleTypeDef* i2c_interface, Ascale ascale);
+HAL_StatusTypeDef MPU9250_Write_Gyro_Full_Scale_Range(Gscale gscale);
 
+HAL_StatusTypeDef MPU9250_Write_Accel_Full_Scale_Range(Ascale ascale);
 
-HAL_StatusTypeDef Calib_Gyro(I2C_HandleTypeDef* i2c_interface);
+uint8_t get_MPU9250_ID();
 
-HAL_StatusTypeDef Calib_Accel(I2C_HandleTypeDef* i2c_interface);
-
-HAL_StatusTypeDef Calib_Vagnet(I2C_HandleTypeDef* i2c_interface);
+uint8_t get_AK8963_ID();
 
 #endif /* INC_IMU_H_ */

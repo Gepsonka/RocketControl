@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "servo.h"
+#include "stdio.h"
 
 /* USER CODE END Includes */
 
@@ -94,9 +95,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   Servo_Init();
 
-  __Test_Servos();
-
-  HAL_Delay(2000);
+  printf("started");
 
   Check_Servos_Manually();
 
@@ -108,7 +107,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  HAL_Delay(1000);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
