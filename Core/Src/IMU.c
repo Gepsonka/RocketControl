@@ -8,6 +8,8 @@
 
 #include "IMU.h"
 
+uint8_t _Mmode;
+
 uint16_t _accel_scale_factor;
 
 float _gyro_scale_factor;
@@ -17,6 +19,8 @@ float _self_test_result[6];
 float _gyro_bias[3];
 
 float _accel_bias[3];
+
+float _mag_bias[3];
 
 
 /*
@@ -39,6 +43,7 @@ void Self_Test(){
 	status = HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, SMPLRT_DIV, 1, (uint8_t*)(0x00), 1, HAL_MAX_DELAY);
 	// Set DLFP to 92Hz
 	status = HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, CONFIG, 1, (uint8_t*)(0x02), 1, HAL_MAX_DELAY);
+	HAL_Delay(100);
 	// Set full scale range of the gyro to 250 dps
 	status = HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, GYRO_CONFIG, 1, (uint8_t*)(1<<FS), 1, HAL_MAX_DELAY);
 	// Set accel rate to 1kHz and bandwidth to 92Hz
@@ -50,12 +55,12 @@ void Self_Test(){
 	// Calculate data needed to get the average
 	for(i=0; i<200; i++){
 		// Reading accel data registers
-		HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, ACCEL_XOUT_H, 1, &raw_data[0], 6, HAL_MAX_DELAY);
+		status = HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, ACCEL_XOUT_H, 1, &raw_data[0], 6, HAL_MAX_DELAY);
 		accelAVG[0] += (int16_t) (((int16_t)raw_data[0] << 8) | raw_data[1]);
 		accelAVG[1] += (int16_t) (((int16_t)raw_data[2] << 8) | raw_data[3]);
 		accelAVG[2] += (int16_t) (((int16_t)raw_data[4] << 8) | raw_data[5]);
 
-		HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, GYRO_XOUT_H, 1, &raw_data[0], 6, HAL_MAX_DELAY);
+		status = HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, GYRO_XOUT_H, 1, &raw_data[0], 6, HAL_MAX_DELAY);
 		gyroAVG[0] += (int16_t) (((int16_t)raw_data[0] << 8) | raw_data[1]);
 		gyroAVG[1] += (int16_t) (((int16_t)raw_data[2] << 8) | raw_data[3]);
 		gyroAVG[2] += (int16_t) (((int16_t)raw_data[4] << 8) | raw_data[5]);
@@ -69,8 +74,8 @@ void Self_Test(){
 	}
 
 	// Configure accel and gyro for self test
-	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, ACCEL_CONFIG, 1, (uint8_t*)(0xE0), 1, HAL_MAX_DELAY);
-	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, GYRO_CONFIG, 1, (uint8_t*)(0xE0), 1, HAL_MAX_DELAY);
+	status = HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, ACCEL_CONFIG, 1, (uint8_t*)(0xE0), 1, HAL_MAX_DELAY);
+	status = HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, GYRO_CONFIG, 1, (uint8_t*)(0xE0), 1, HAL_MAX_DELAY);
 	HAL_Delay(100); // Let the device to stabilize
 
 	// Calculate data needed to get the average (self-test)
@@ -173,14 +178,14 @@ void Calibrate_MPU9250(){
 	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, USER_CTRL, 1, (uint8_t*)(0x40), 1, HAL_MAX_DELAY);
 	// Enable gyro and accelerometer sensors for FIFO
 	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, FIFO_EN, 1, (uint8_t*)(0x78), 1, HAL_MAX_DELAY);
-	HAL_Delay(40); // accumulate 40 samples in 40 milliseconds = 480 bytes
+	HAL_Delay(70); // accumulate 40 samples in 40 milliseconds = 480 bytes
 
 
 	// At end of sample accumulation, turn off FIFO sensor read
 	// Disable gyro and accel sensors for FIFO
 	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, FIFO_EN, 1, (uint8_t*)(0x00), 1, HAL_MAX_DELAY);
 	// Read FIFO sample count
-	HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, FIFO_COUNTH, 1, &raw_data[0], 6, HAL_MAX_DELAY);
+	HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, FIFO_COUNTH, 1, &raw_data[0], 2, HAL_MAX_DELAY);
 	fifo_count = ((uint16_t)raw_data[0] << 8) | raw_data[1];
 	packet_count = (uint16_t)(fifo_count / 12); // How many sets of full gyro and accelerometer data for averaging
 
@@ -285,9 +290,115 @@ void Calibrate_MPU9250(){
 
 }
 
+void Calibrate_AK8963(){
+	uint16_t ii = 0, sample_count = 0;
+	int32_t mag_bias[3] = {0, 0, 0}, mag_scale[3] = {0, 0, 0};
+	int16_t mag_max[3] = {-32767, -32767, -32767}, mag_min[3] = {32767, 32767, 32767}, mag_temp[3] = {0, 0, 0};
+	uint8_t rawData[7] = {0, 0, 0, 0, 0, 0, 0}, magCalibration[3] = {0, 0, 0};
+
+	delay(4000);
+
+	// shoot for ~fifteen seconds of mag data
+	if(_Mmode == 0x02) sample_count = 128;  // at 8 Hz ODR, new mag data is available every 125 ms
+	if(_Mmode == 0x06) sample_count = 1500;  // at 100 Hz ODR, new mag data is available every 10 ms
+	for(ii = 0; ii < sample_count; ii++) {
+		HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, I2C_SLV0_ADDR, 1, (uint8_t *)(AK8963_ADDRESS | 0x80), 1, HAL_MAX_DELAY);    // Set the I2C slave address of AK8963 and set for read.
+		HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, I2C_SLV0_REG, 1, (uint8_t *)(AK8963_XOUT_L), 1, HAL_MAX_DELAY);
+		HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, I2C_SLV0_CTRL, 1, (uint8_t *)(0x87), 1, HAL_MAX_DELAY);
+		if(_Mmode == 0x02) delay(125);  // at 8 Hz ODR, new mag data is available every 125 ms
+		if(_Mmode == 0x06) delay(10);   // at 100 Hz ODR, new mag data is available every 10 ms
+		HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, EXT_SENS_DATA_00, 1, &rawData[0], 7, HAL_MAX_DELAY);   // Read the x-, y-, and z-axis calibration values
+		mag_temp[0] = ((int16_t)rawData[1] << 8) | rawData[0] ;     // Turn the MSB and LSB into a signed 16-bit value
+		mag_temp[1] = ((int16_t)rawData[3] << 8) | rawData[2] ;     // Data stored as little Endian
+		mag_temp[2] = ((int16_t)rawData[5] << 8) | rawData[4] ;
+
+		for (int jj = 0; jj < 3; jj++) {
+		  if(mag_temp[jj] > mag_max[jj]) mag_max[jj] = mag_temp[jj];
+		  if(mag_temp[jj] < mag_min[jj]) mag_min[jj] = mag_temp[jj];
+		}
+	}
+
+
+	// Get hard iron correction
+	mag_bias[0]  = (mag_max[0] + mag_min[0])/2;  // get average x mag bias in counts
+	mag_bias[1]  = (mag_max[1] + mag_min[1])/2;  // get average y mag bias in counts
+	mag_bias[2]  = (mag_max[2] + mag_min[2])/2;  // get average z mag bias in counts
+
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, I2C_SLV0_ADDR, 1, (uint8_t*)(AK8963_ADDRESS | 0x80), 1, HAL_MAX_DELAY);    // Set the I2C slave address of AK8963 and set for read.
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, I2C_SLV0_REG, 1, (uint8_t*)(AK8963_ASAX), 1, HAL_MAX_DELAY);
+	HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, I2C_SLV0_ADDR, 1, (uint8_t*)(AK8963_ADDRESS | 0x80), 1, HAL_MAX_DELAY);
+	delay(50);
+	HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, EXT_SENS_DATA_00, 1, &rawData[0], 3, HAL_MAX_DELAY);  // Read the x-, y-, and z-axis calibration values
+	magCalibration[0] =  (float)(rawData[0] - 128)/256.0f + 1.0f;        // Return x-axis sensitivity adjustment values, etc.
+	magCalibration[1] =  (float)(rawData[1] - 128)/256.0f + 1.0f;
+	magCalibration[2] =  (float)(rawData[2] - 128)/256.0f + 1.0f;
+
+	dest1[0] = (float) mag_bias[0]*_mRes*magCalibration[0];  // save mag biases in G for main program
+	dest1[1] = (float) mag_bias[1]*_mRes*magCalibration[1];
+	dest1[2] = (float) mag_bias[2]*_mRes*magCalibration[2];
+
+	// Get soft iron correction estimate
+	mag_scale[0]  = (mag_max[0] - mag_min[0])/2;  // get average x axis max chord length in counts
+	mag_scale[1]  = (mag_max[1] - mag_min[1])/2;  // get average y axis max chord length in counts
+	mag_scale[2]  = (mag_max[2] - mag_min[2])/2;  // get average z axis max chord length in counts
+
+	float avg_rad = mag_scale[0] + mag_scale[1] + mag_scale[2];
+	avg_rad /= 3.0;
+
+	_mag_bias[0] = avg_rad/((float)mag_scale[0]);
+	_mag_bias[1] = avg_rad/((float)mag_scale[1]);
+	_mag_bias[2] = avg_rad/((float)mag_scale[2]);
+
+}
+
 
 void Init_MPU9250(){
 
+}
+
+void Init_AK8963(){
+	uint8_t rawData[3];  // x/y/z gyro calibration data stored here
+	_Mmode = Mmode;
+
+	HAL_I2C_Mem_Write(hi2c1, MPU9250_ADDRESS, I2C_SLV0_ADDR, 1, (uint8_t*)AK8963_ADDRESS, 1, HAL_MAX_DELAY);  // Set the I2C slave address of AK8963 and set for write.
+	HAL_I2C_Mem_Write(hi2c1, MPU9250_ADDRESS, I2C_SLV0_REG, 1, (uint8_t*)(AK8963_CNTL2), 1, HAL_MAX_DELAY); // I2C slave 0 register address from where to begin data transfer
+	HAL_I2C_Mem_Write(hi2c1, MPU9250_ADDRESS, I2C_SLV0_DO, 1, (uint8_t*)0x01, 1, HAL_MAX_DELAY); // Reset AK8963
+	HAL_I2C_Mem_Write(hi2c1, MPU9250_ADDRESS, I2C_SLV0_CTRL, 1, (uint8_t*)0x81, 1, HAL_MAX_DELAY); // Enable I2C and write 1 byte
+	delay(50);
+	HAL_I2C_Mem_Write(hi2c1, MPU9250_ADDRESS, I2C_SLV0_ADDR, 1, (uint8_t*)AK8963_ADDRESS, Size, Timeout)(MPUnum, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
+	writeByte(MPUnum, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
+	writeByte(MPUnum, I2C_SLV0_DO, 0x00);                       // Power down magnetometer
+	writeByte(MPUnum, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and write 1 byte
+	delay(50);
+	writeByte(MPUnum, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
+	writeByte(MPUnum, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
+	writeByte(MPUnum, I2C_SLV0_DO, 0x0F);                       // Enter fuze mode
+	writeByte(MPUnum, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and write 1 byte
+	delay(50);
+
+	writeByte(MPUnum, I2C_SLV0_ADDR, AK8963_ADDRESS | 0x80);    // Set the I2C slave address of AK8963 and set for read.
+	writeByte(MPUnum, I2C_SLV0_REG, AK8963_ASAX);               // I2C slave 0 register address from where to begin data transfer
+	writeByte(MPUnum, I2C_SLV0_CTRL, 0x83);                     // Enable I2C and read 3 bytes
+	delay(50);
+	readBytes(MPUnum, EXT_SENS_DATA_00, 3, &rawData[0]);        // Read the x-, y-, and z-axis calibration values
+	magCalibration[0] =  (float)(rawData[0] - 128)/256.0f + 1.0f;        // Return x-axis sensitivity adjustment values, etc.
+	magCalibration[1] =  (float)(rawData[1] - 128)/256.0f + 1.0f;
+	magCalibration[2] =  (float)(rawData[2] - 128)/256.0f + 1.0f;
+
+	writeByte(MPUnum, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
+	writeByte(MPUnum, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
+	writeByte(MPUnum, I2C_SLV0_DO, 0x00);                       // Power down magnetometer
+	writeByte(MPUnum, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and transfer 1 byte
+	delay(50);
+
+	writeByte(MPUnum, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
+	writeByte(MPUnum, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
+	// Configure the magnetometer for continuous read and highest resolution
+	// set Mscale bit 4 to 1 (0) to enable 16 (14) bit resolution in CNTL register,
+	// and enable continuous mode data acquisition Mmode (bits [3:0]), 0010 for 8 Hz and 0110 for 100 Hz sample rates
+	writeByte(MPUnum, I2C_SLV0_DO, Mscale << 4 | Mmode);        // Set magnetometer data resolution and sample ODR
+	writeByte(MPUnum, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and transfer 1 byte
+	delay(50);
 }
 
 
@@ -317,7 +428,6 @@ uint8_t get_AK8963_ID(){
 
 
 HAL_StatusTypeDef MPU9250_Write_Gyro_Full_Scale_Range(Gscale gscale){
-
 	HAL_StatusTypeDef res;
 	uint8_t mode = gscale;
 	res = HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, GYRO_CONFIG, 1, &mode, 1, HAL_MAX_DELAY);

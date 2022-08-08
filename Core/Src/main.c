@@ -99,13 +99,15 @@ int main(void)
   //Check_Servos_Manually();
 
   uint8_t raw_data[8];
-  HAL_StatusTypeDef a = HAL_I2C_Mem_Read(&hi2c1, MPU9250_ADDRESS, ACCEL_XOUT_H, 1, &raw_data[0], 6, HAL_MAX_DELAY);
-  int32_t accel_bias_reg = (int32_t) (((int16_t)raw_data[0] << 8) | raw_data[1]);
+  HAL_StatusTypeDef a = HAL_I2C_Mem_Write(&hi2c1, MPU9250_ADDRESS, CONFIG, 1, (uint8_t*)(0x02), 1, HAL_MAX_DELAY);
+  HAL_Delay(100); // Wait till the the device resets
+  //int32_t accel_bias_reg = (int32_t) (((int16_t)raw_data[0] << 8) | raw_data[1]);
 
 
 
   Self_Test();
   Calibrate_MPU9250();
+  Calibrate_AK8963();
 
 
   /* USER CODE END 2 */

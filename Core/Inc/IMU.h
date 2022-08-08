@@ -252,7 +252,11 @@ void Self_Test();
 
 void Calibrate_MPU9250();
 
+void Calibrate_AK8963();
+
 void Init_MPU9250();
+
+void Init_AK8963();
 
 
 
