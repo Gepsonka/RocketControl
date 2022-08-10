@@ -1,22 +1,17 @@
-/*
- * IMU.h
- *
- *  Created on: Jul 10, 2022
- *      Author: expel
- */
+#ifndef IMU_H
+#define IMU_H
 
-#ifndef INC_IMU_H_
-#define INC_IMU_H_
-
-#include <stdint.h>
-#include <math.h>
-
+#include "math.h"
 #include "i2c.h"
+#include "string.h"
 
-#define AK8963_ADDRESS   0x0C
-#define AK8963_WHO_AM_I  0x00 // should return 0x48
-#define AK8963_WHO_AM_I_SUPPOSED_TO 0x48
-#define AK8963_INFO      0x01
+// See also MPU-9250 Register Map and Descriptions, Revision 4.0, RM-MPU-9250A-00, Rev. 1.4, 9/9/2013 for registers not listed in
+// above document; the MPU9250 and MPU9150 are virtually identical but the latter has a different register map
+//
+//Magnetometer Registers
+#define AK8963_ADDRESS   0x0C<<1
+#define WHO_AM_I_AK8963  0x00 // should return 0x48
+#define INFO             0x01
 #define AK8963_ST1       0x02  // data ready status bit 0
 #define AK8963_XOUT_L    0x03  // data
 #define AK8963_XOUT_H    0x04
@@ -152,7 +147,6 @@
 #define FIFO_COUNTL      0x73
 #define FIFO_R_W         0x74
 #define WHO_AM_I_MPU9250 0x75 // Should return 0x71
-#define WHO_AM_I_MPU9250_SUPPOSED_TO 0x70
 #define XA_OFFSET_H      0x77
 #define XA_OFFSET_L      0x78
 #define YA_OFFSET_H      0x7A
@@ -162,7 +156,7 @@
 
 // Using the MSENSR-9250 breakout board, ADO is set to 0
 // Seven-bit device address is 110100 for ADO = 0 and 110101 for ADO = 1
-// mbed uses the eight-bit device address, so shift seven-bit addresses left by one!
+//mbed uses the eight-bit device address, so shift seven-bit addresses left by one!
 #define ADO 0
 #if ADO
 #define MPU9250_ADDRESS 0x69<<1  // Device address when ADO = 1
@@ -170,102 +164,119 @@
 #define MPU9250_ADDRESS 0x68<<1  // Device address when ADO = 0
 #endif
 
-/*
- * Accel measure ranges
- */
-#define ACCEL_SF_2G 16384
-#define ACCEL_SF_4G 8192
-#define ACCEL_SF_8G 4096
-#define ACCEL_SF_16G 2048
-
-
-/*
- * Gyro measure range
- */
-#define	GYRO_SF_250DPS 131
-#define	GYRO_SF_500DPS 65.5
-#define	GYRO_SF_1000DPS 32.8
-#define	GYRO_SF_2000DPS 16.4
-
-// Accelerometer
-typedef enum {
+// Set initial input parameters
+typedef enum  {
   AFS_2G = 0,
   AFS_4G,
   AFS_8G,
   AFS_16G
 }Ascale;
 
-
-/*
- * Setting the full scale of the gyroscope
- */
-typedef enum {
-	GFS_250DPS = 0b00,
-	GFS_500DPS = 0b01,
-	GFS_1000DPS = 0b10,
-	GFS_2000DPS = 0b11
+typedef enum  {
+  GFS_250DPS = 0,
+  GFS_500DPS,
+  GFS_1000DPS,
+  GFS_2000DPS
 }Gscale;
 
-
-
-typedef enum {
+typedef enum  {
   MFS_14BITS = 0, // 0.6 mG per LSB
   MFS_16BITS      // 0.15 mG per LSB
 }Mscale;
 
 
-
-
-
-
-/*
- * Raw data from sensor
- */
 typedef struct {
-	int16_t rawXGyro;
-	int16_t rawyGyro;
-	int16_t rawzGyro;
-} GyroRaw;
-
-typedef struct  {
-	int16_t rawXAccel;
-	int16_t rawYAccel;
-	int16_t rawZAccel;
-} AccelRaw;
+	float STAvgAccel_X;
+	float STAvgAccel_Y;
+	float STAvgAccel_Z;
+}AccelSelfTest;
 
 typedef struct {
-	int16_t rawXMagnet;
-	int16_t rawYMagnet;
-	int16_t rawZMagnet;
-} MagnetRaw;
+	float STAvgGyro_X;
+	float STAvgGyro_Y;
+	float STAvgGyro_Z;
+}GyroSelfTest;
+
 
 typedef struct {
-	GyroRaw gyroRaw;
-	AccelRaw accelRaw;
-	MagnetRaw magnetRaw;
-} SensorRawData;
+	int16_t accel_raw_x;
+	int16_t accel_raw_y;
+	int16_t accel_raw_z;
+}AccerRawData;
+
+typedef struct {
+	int16_t gyro_raw_x;
+	int16_t gyro_raw_y;
+	int16_t gyro_raw_z;
+}GyroRawData;
+
+typedef struct {
+	int16_t mag_raw_x;
+	int16_t mag_raw_y;
+	int16_t mag_raw_z;
+}MagRawData;
 
 
 
 
-void Self_Test();
-
-void Calibrate_MPU9250();
-
-void Calibrate_AK8963();
-
-void Init_MPU9250();
-
-void Init_AK8963();
 
 
 
-HAL_StatusTypeDef MPU9250_Write_Gyro_Full_Scale_Range(Gscale gscale);
+uint8_t getMPU9250ID();
 
-HAL_StatusTypeDef MPU9250_Write_Accel_Full_Scale_Range(Ascale ascale);
+uint8_t getAK8963CID();
 
-uint8_t get_MPU9250_ID();
 
-uint8_t get_AK8963_ID();
 
-#endif /* INC_IMU_H_ */
+float getMres(Mscale mscale);
+
+float getGres(Gscale gscale);
+
+float getAres(Ascale ascale);
+
+void accelWakeOnMotion();
+
+void gyromagSleep();
+
+void gyromagWake(uint8_t Mmode);
+
+void resetMPU9250();
+
+void readMPU9250Data(int16_t * destination);
+
+void readAccelData(int16_t * destination);
+
+void readGyroData(int16_t * destination);
+
+void readMagData(int16_t * destination);
+
+uint8_t checkNewMagData();
+
+uint8_t checkNewAccelGyroData();
+
+uint8_t checkWakeOnMotion();
+
+void MreadMagData(int16_t * destination);
+
+int16_t readGyroTempData();
+
+int16_t readTempData();
+
+void resetMPU9250();
+
+void initAK8963(uint8_t Mscale, uint8_t Mmode, float * magCalibration);
+
+void MinitAK8963Slave(uint8_t Mscale, uint8_t Mmode, float * magCalibration);
+
+void initMPU9250(uint8_t Ascale, uint8_t Gscale, uint8_t sampleRate);
+
+void magcalMPU9250(float * dest1, float * dest2);
+
+void calibrateMPU9250(float * dest1, float * dest2);
+
+void MPU9250SelfTest(float * destination);
+
+
+
+
+#endif
