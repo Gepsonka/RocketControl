@@ -1,5 +1,8 @@
 ../Core/Src/servo.c:20:6:Servo_Init	8	static
 ../Core/Src/servo.c:42:6:Check_Servos_Manually	24	static
 ../Core/Src/servo.c:59:6:Set_Servos_Into_Default_Position	4	static
-../Core/Src/servo.c:71:6:_Move_Servo	24	static
-../Core/Src/servo.c:109:6:__Test_Servos	8	static
+../Core/Src/servo.c:69:6:Move_All_Servos	16	static
+../Core/Src/servo.c:83:6:Move_Servo_Pair	16	static
+../Core/Src/servo.c:102:6:_Move_Servo	24	static
+../Core/Src/servo.c:140:6:_Check_And_Switch_Allowed_Degree	16	static
+../Core/Src/servo.c:156:6:__Test_Servos	8	static

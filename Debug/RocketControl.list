@@ -27,23 +27,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  0002000c  2**0
                   CONTENTS, READONLY
- 12 .debug_info   00011d32  00000000  00000000  0002003c  2**0
+ 12 .debug_info   00011e07  00000000  00000000  0002003c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 0000297e  00000000  00000000  00031d6e  2**0
+ 13 .debug_abbrev 000029ab  00000000  00000000  00031e43  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 000011c8  00000000  00000000  000346f0  2**3
+ 14 .debug_aranges 000011e0  00000000  00000000  000347f0  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_ranges 00001070  00000000  00000000  000358b8  2**3
+ 15 .debug_ranges 00001088  00000000  00000000  000359d0  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  0000299a  00000000  00000000  00036928  2**0
+ 16 .debug_macro  000029a6  00000000  00000000  00036a58  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0001555d  00000000  00000000  000392c2  2**0
+ 17 .debug_line   000159b6  00000000  00000000  000393fe  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000c60ec  00000000  00000000  0004e81f  2**0
+ 18 .debug_str    000c61d9  00000000  00000000  0004edb4  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000050  00000000  00000000  0011490b  2**0
+ 19 .comment      00000050  00000000  00000000  00114f8d  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00004ad0  00000000  00000000  0011495c  2**2
+ 20 .debug_frame  00004b40  00000000  00000000  00114fe0  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -721,7 +721,7 @@ Disassembly of section .text:
  8000998:	4770      	bx	lr
  800099a:	ea50 3001 	orrs.w	r0, r0, r1, lsl #12
  800099e:	d102      	bne.n	80009a6 <__aeabi_d2uiz+0x3a>
- 80009a0:	f04f 30ff 	mov.w	r0, #4294967295
+ 80009a0:	f04f 30ff 	mov.w	r0, #4294967295	; 0xffffffff
  80009a4:	4770      	bx	lr
  80009a6:	f04f 0000 	mov.w	r0, #0
  80009aa:	4770      	bx	lr
@@ -1339,7 +1339,7 @@ void Check_Servos_Manually(){
  8000cf6:	23a6      	movs	r3, #166	; 0xa6
  8000cf8:	73fb      	strb	r3, [r7, #15]
 
-	for (int servo = 1; servo <= 4; servo++){
+	for (int servo = 1; servo <= NUM_OF_SERVO_MOTORS; servo++){
  8000cfa:	2301      	movs	r3, #1
  8000cfc:	60bb      	str	r3, [r7, #8]
  8000cfe:	e01d      	b.n	8000d3c <Check_Servos_Manually+0x4c>
@@ -1373,7 +1373,7 @@ void Check_Servos_Manually(){
 		degree = LOWEST_PITCH_DEG;
  8000d32:	23a6      	movs	r3, #166	; 0xa6
  8000d34:	73fb      	strb	r3, [r7, #15]
-	for (int servo = 1; servo <= 4; servo++){
+	for (int servo = 1; servo <= NUM_OF_SERVO_MOTORS; servo++){
  8000d36:	68bb      	ldr	r3, [r7, #8]
  8000d38:	3301      	adds	r3, #1
  8000d3a:	60bb      	str	r3, [r7, #8]
@@ -1398,19 +1398,19 @@ void Check_Servos_Manually(){
 void Set_Servos_Into_Default_Position(){
  8000d50:	b480      	push	{r7}
  8000d52:	af00      	add	r7, sp, #0
-	TIM1->CCR1 = INLINE;
+	TIM1->CCR1 = INLINE_DUTY_CYCLE;
  8000d54:	4b08      	ldr	r3, [pc, #32]	; (8000d78 <Set_Servos_Into_Default_Position+0x28>)
  8000d56:	2296      	movs	r2, #150	; 0x96
  8000d58:	635a      	str	r2, [r3, #52]	; 0x34
-	TIM1->CCR2 = INLINE;
+	TIM1->CCR2 = INLINE_DUTY_CYCLE;
  8000d5a:	4b07      	ldr	r3, [pc, #28]	; (8000d78 <Set_Servos_Into_Default_Position+0x28>)
  8000d5c:	2296      	movs	r2, #150	; 0x96
  8000d5e:	639a      	str	r2, [r3, #56]	; 0x38
-	TIM1->CCR3 = INLINE;
+	TIM1->CCR3 = INLINE_DUTY_CYCLE;
  8000d60:	4b05      	ldr	r3, [pc, #20]	; (8000d78 <Set_Servos_Into_Default_Position+0x28>)
  8000d62:	2296      	movs	r2, #150	; 0x96
  8000d64:	63da      	str	r2, [r3, #60]	; 0x3c
-	TIM1->CCR4 = INLINE;
+	TIM1->CCR4 = INLINE_DUTY_CYCLE;
  8000d66:	4b04      	ldr	r3, [pc, #16]	; (8000d78 <Set_Servos_Into_Default_Position+0x28>)
  8000d68:	2296      	movs	r2, #150	; 0x96
  8000d6a:	641a      	str	r2, [r3, #64]	; 0x40
@@ -1440,20 +1440,20 @@ void _Move_Servo(int8_t num_of_servo, int8_t degree){
  8000d8e:	71bb      	strb	r3, [r7, #6]
 	uint8_t duty_cycle;
 
-	if (degree < -90){
+	if (degree < LOWEST_PITCH_DEG){
  8000d90:	f997 3006 	ldrsb.w	r3, [r7, #6]
  8000d94:	f113 0f5a 	cmn.w	r3, #90	; 0x5a
  8000d98:	da02      	bge.n	8000da0 <_Move_Servo+0x20>
-		duty_cycle = 100; // -90deg
+		duty_cycle = LOWEST_PITCH_DUTY_CYCLE; // -90deg
  8000d9a:	2364      	movs	r3, #100	; 0x64
  8000d9c:	73fb      	strb	r3, [r7, #15]
  8000d9e:	e01b      	b.n	8000dd8 <_Move_Servo+0x58>
 
-	} else if (degree > 90){
+	} else if (degree > HIGHEST_ENABLED_PICH_DEG){
  8000da0:	f997 3006 	ldrsb.w	r3, [r7, #6]
- 8000da4:	2b5a      	cmp	r3, #90	; 0x5a
+ 8000da4:	2b2d      	cmp	r3, #45	; 0x2d
  8000da6:	dd02      	ble.n	8000dae <_Move_Servo+0x2e>
-		duty_cycle = 200; // +90deg
+		duty_cycle = HIGHEST_PITCH_DUTY_CYCLE; // +90deg
  8000da8:	23c8      	movs	r3, #200	; 0xc8
  8000daa:	73fb      	strb	r3, [r7, #15]
  8000dac:	e014      	b.n	8000dd8 <_Move_Servo+0x58>
@@ -1490,7 +1490,7 @@ void _Move_Servo(int8_t num_of_servo, int8_t degree){
  8000dec:	08000e03 	.word	0x08000e03
  8000df0:	08000e0d 	.word	0x08000e0d
  8000df4:	08000e17 	.word	0x08000e17
-		case 1:
+		case NORTH_SERVO:
 			*servoDutyCycles.Servo1DutyCycle = duty_cycle;
  8000df8:	4b0b      	ldr	r3, [pc, #44]	; (8000e28 <_Move_Servo+0xa8>)
  8000dfa:	681b      	ldr	r3, [r3, #0]
@@ -1499,7 +1499,7 @@ void _Move_Servo(int8_t num_of_servo, int8_t degree){
 			break;
  8000e00:	e00e      	b.n	8000e20 <_Move_Servo+0xa0>
 
-		case 2:
+		case EAST_SERVO:
 			*servoDutyCycles.Servo2DutyCycle = duty_cycle;
  8000e02:	4b09      	ldr	r3, [pc, #36]	; (8000e28 <_Move_Servo+0xa8>)
  8000e04:	685b      	ldr	r3, [r3, #4]
@@ -1508,7 +1508,7 @@ void _Move_Servo(int8_t num_of_servo, int8_t degree){
 			break;
  8000e0a:	e009      	b.n	8000e20 <_Move_Servo+0xa0>
 
-		case 3:
+		case SOUTH_SERVO:
 			*servoDutyCycles.Servo3DutyCycle = duty_cycle;
  8000e0c:	4b06      	ldr	r3, [pc, #24]	; (8000e28 <_Move_Servo+0xa8>)
  8000e0e:	689b      	ldr	r3, [r3, #8]
@@ -1517,7 +1517,7 @@ void _Move_Servo(int8_t num_of_servo, int8_t degree){
 			break;
  8000e14:	e004      	b.n	8000e20 <_Move_Servo+0xa0>
 
-		case 4:
+		case WEST_SERVO:
 			*servoDutyCycles.Servo4DutyCycle = duty_cycle;
  8000e16:	4b04      	ldr	r3, [pc, #16]	; (8000e28 <_Move_Servo+0xa8>)
  8000e18:	68db      	ldr	r3, [r3, #12]
@@ -1526,8 +1526,6 @@ void _Move_Servo(int8_t num_of_servo, int8_t degree){
 			break;
  8000e1e:	bf00      	nop
 	}
-
-
 }
  8000e20:	bf00      	nop
  8000e22:	3710      	adds	r7, #16
@@ -1539,25 +1537,26 @@ void _Move_Servo(int8_t num_of_servo, int8_t degree){
 
 08000e34 <__Test_Servos>:
 
+
 /*
  * For testing purposes!
  */
 void __Test_Servos(){
  8000e34:	b580      	push	{r7, lr}
  8000e36:	af00      	add	r7, sp, #0
-	TIM1->CCR1 = INLINE;
+	TIM1->CCR1 = INLINE_DUTY_CYCLE;
  8000e38:	4b1e      	ldr	r3, [pc, #120]	; (8000eb4 <__Test_Servos+0x80>)
  8000e3a:	2296      	movs	r2, #150	; 0x96
  8000e3c:	635a      	str	r2, [r3, #52]	; 0x34
-	TIM1->CCR2 = INLINE;
+	TIM1->CCR2 = INLINE_DUTY_CYCLE;
  8000e3e:	4b1d      	ldr	r3, [pc, #116]	; (8000eb4 <__Test_Servos+0x80>)
  8000e40:	2296      	movs	r2, #150	; 0x96
  8000e42:	639a      	str	r2, [r3, #56]	; 0x38
-	TIM1->CCR3 = INLINE;
+	TIM1->CCR3 = INLINE_DUTY_CYCLE;
  8000e44:	4b1b      	ldr	r3, [pc, #108]	; (8000eb4 <__Test_Servos+0x80>)
  8000e46:	2296      	movs	r2, #150	; 0x96
  8000e48:	63da      	str	r2, [r3, #60]	; 0x3c
-	TIM1->CCR4 = INLINE;
+	TIM1->CCR4 = INLINE_DUTY_CYCLE;
  8000e4a:	4b1a      	ldr	r3, [pc, #104]	; (8000eb4 <__Test_Servos+0x80>)
  8000e4c:	2296      	movs	r2, #150	; 0x96
  8000e4e:	641a      	str	r2, [r3, #64]	; 0x40
@@ -1567,19 +1566,19 @@ void __Test_Servos(){
  8000e54:	f000 faee 	bl	8001434 <HAL_Delay>
 
 
-	TIM1->CCR1 = LOWEST_ENABLED_PITCH;
+	TIM1->CCR1 = LOWEST_ENABLED_PITCH_DUTY_CYCLE;
  8000e58:	4b16      	ldr	r3, [pc, #88]	; (8000eb4 <__Test_Servos+0x80>)
  8000e5a:	227d      	movs	r2, #125	; 0x7d
  8000e5c:	635a      	str	r2, [r3, #52]	; 0x34
-	TIM1->CCR2 = LOWEST_ENABLED_PITCH;
+	TIM1->CCR2 = LOWEST_ENABLED_PITCH_DUTY_CYCLE;
  8000e5e:	4b15      	ldr	r3, [pc, #84]	; (8000eb4 <__Test_Servos+0x80>)
  8000e60:	227d      	movs	r2, #125	; 0x7d
  8000e62:	639a      	str	r2, [r3, #56]	; 0x38
-	TIM1->CCR3 = LOWEST_ENABLED_PITCH;
+	TIM1->CCR3 = LOWEST_ENABLED_PITCH_DUTY_CYCLE;
  8000e64:	4b13      	ldr	r3, [pc, #76]	; (8000eb4 <__Test_Servos+0x80>)
  8000e66:	227d      	movs	r2, #125	; 0x7d
  8000e68:	63da      	str	r2, [r3, #60]	; 0x3c
-	TIM1->CCR4 = LOWEST_ENABLED_PITCH;
+	TIM1->CCR4 = LOWEST_ENABLED_PITCH_DUTY_CYCLE;
  8000e6a:	4b12      	ldr	r3, [pc, #72]	; (8000eb4 <__Test_Servos+0x80>)
  8000e6c:	227d      	movs	r2, #125	; 0x7d
  8000e6e:	641a      	str	r2, [r3, #64]	; 0x40
@@ -1589,19 +1588,19 @@ void __Test_Servos(){
  8000e74:	f000 fade 	bl	8001434 <HAL_Delay>
 
 
-	TIM1->CCR1 = HIGHEST_ENABLED_PICH;
+	TIM1->CCR1 = HIGHEST_ENABLED_PICH_DUTY_CYCLE;
  8000e78:	4b0e      	ldr	r3, [pc, #56]	; (8000eb4 <__Test_Servos+0x80>)
  8000e7a:	22af      	movs	r2, #175	; 0xaf
  8000e7c:	635a      	str	r2, [r3, #52]	; 0x34
-	TIM1->CCR2 = HIGHEST_ENABLED_PICH;
+	TIM1->CCR2 = HIGHEST_ENABLED_PICH_DUTY_CYCLE;
  8000e7e:	4b0d      	ldr	r3, [pc, #52]	; (8000eb4 <__Test_Servos+0x80>)
  8000e80:	22af      	movs	r2, #175	; 0xaf
  8000e82:	639a      	str	r2, [r3, #56]	; 0x38
-	TIM1->CCR3 = HIGHEST_ENABLED_PICH;
+	TIM1->CCR3 = HIGHEST_ENABLED_PICH_DUTY_CYCLE;
  8000e84:	4b0b      	ldr	r3, [pc, #44]	; (8000eb4 <__Test_Servos+0x80>)
  8000e86:	22af      	movs	r2, #175	; 0xaf
  8000e88:	63da      	str	r2, [r3, #60]	; 0x3c
-	TIM1->CCR4 = HIGHEST_ENABLED_PICH;
+	TIM1->CCR4 = HIGHEST_ENABLED_PICH_DUTY_CYCLE;
  8000e8a:	4b0a      	ldr	r3, [pc, #40]	; (8000eb4 <__Test_Servos+0x80>)
  8000e8c:	22af      	movs	r2, #175	; 0xaf
  8000e8e:	641a      	str	r2, [r3, #64]	; 0x40
@@ -1611,19 +1610,19 @@ void __Test_Servos(){
  8000e90:	f44f 60fa 	mov.w	r0, #2000	; 0x7d0
  8000e94:	f000 face 	bl	8001434 <HAL_Delay>
 
-	TIM1->CCR1 = INLINE;
+	TIM1->CCR1 = INLINE_DUTY_CYCLE;
  8000e98:	4b06      	ldr	r3, [pc, #24]	; (8000eb4 <__Test_Servos+0x80>)
  8000e9a:	2296      	movs	r2, #150	; 0x96
  8000e9c:	635a      	str	r2, [r3, #52]	; 0x34
-	TIM1->CCR2 = INLINE;
+	TIM1->CCR2 = INLINE_DUTY_CYCLE;
  8000e9e:	4b05      	ldr	r3, [pc, #20]	; (8000eb4 <__Test_Servos+0x80>)
  8000ea0:	2296      	movs	r2, #150	; 0x96
  8000ea2:	639a      	str	r2, [r3, #56]	; 0x38
-	TIM1->CCR3 = INLINE;
+	TIM1->CCR3 = INLINE_DUTY_CYCLE;
  8000ea4:	4b03      	ldr	r3, [pc, #12]	; (8000eb4 <__Test_Servos+0x80>)
  8000ea6:	2296      	movs	r2, #150	; 0x96
  8000ea8:	63da      	str	r2, [r3, #60]	; 0x3c
-	TIM1->CCR4 = INLINE;
+	TIM1->CCR4 = INLINE_DUTY_CYCLE;
  8000eaa:	4b02      	ldr	r3, [pc, #8]	; (8000eb4 <__Test_Servos+0x80>)
  8000eac:	2296      	movs	r2, #150	; 0x96
  8000eae:	641a      	str	r2, [r3, #64]	; 0x40
@@ -2689,7 +2688,7 @@ __weak HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
         HAL_NVIC_SetPriority(SysTick_IRQn, TickPriority, 0U);
  80013b8:	2200      	movs	r2, #0
  80013ba:	6879      	ldr	r1, [r7, #4]
- 80013bc:	f04f 30ff 	mov.w	r0, #4294967295
+ 80013bc:	f04f 30ff 	mov.w	r0, #4294967295	; 0xffffffff
  80013c0:	f000 f937 	bl	8001632 <HAL_NVIC_SetPriority>
         uwTickPrio = TickPriority;
  80013c4:	4a0a      	ldr	r2, [pc, #40]	; (80013f0 <HAL_InitTick+0x74>)
@@ -2801,7 +2800,7 @@ __weak void HAL_Delay(uint32_t Delay)
   /* Add a period to guaranty minimum wait */
   if (wait < HAL_MAX_DELAY)
  8001446:	68fb      	ldr	r3, [r7, #12]
- 8001448:	f1b3 3fff 	cmp.w	r3, #4294967295
+ 8001448:	f1b3 3fff 	cmp.w	r3, #4294967295	; 0xffffffff
  800144c:	d005      	beq.n	800145a <HAL_Delay+0x26>
   {
     wait += (uint32_t)uwTickFreq;
@@ -3036,7 +3035,7 @@ __STATIC_INLINE uint32_t NVIC_EncodePriority (uint32_t PriorityGroup, uint32_t P
 
   return (
            ((PreemptPriority & (uint32_t)((1UL << (PreemptPriorityBits)) - 1UL)) << SubPriorityBits) |
- 80015a4:	f04f 32ff 	mov.w	r2, #4294967295
+ 80015a4:	f04f 32ff 	mov.w	r2, #4294967295	; 0xffffffff
  80015a8:	69bb      	ldr	r3, [r7, #24]
  80015aa:	fa02 f303 	lsl.w	r3, r2, r3
  80015ae:	43da      	mvns	r2, r3
@@ -3045,7 +3044,7 @@ __STATIC_INLINE uint32_t NVIC_EncodePriority (uint32_t PriorityGroup, uint32_t P
  80015b4:	697b      	ldr	r3, [r7, #20]
  80015b6:	409a      	lsls	r2, r3
            ((SubPriority     & (uint32_t)((1UL << (SubPriorityBits    )) - 1UL)))
- 80015b8:	f04f 31ff 	mov.w	r1, #4294967295
+ 80015b8:	f04f 31ff 	mov.w	r1, #4294967295	; 0xffffffff
  80015bc:	697b      	ldr	r3, [r7, #20]
  80015be:	fa01 f303 	lsl.w	r3, r1, r3
  80015c2:	43d9      	mvns	r1, r3
@@ -3091,7 +3090,7 @@ __STATIC_INLINE uint32_t SysTick_Config(uint32_t ticks)
  80015f4:	6053      	str	r3, [r2, #4]
   NVIC_SetPriority (SysTick_IRQn, (1UL << __NVIC_PRIO_BITS) - 1UL); /* set Priority for Systick Interrupt */
  80015f6:	210f      	movs	r1, #15
- 80015f8:	f04f 30ff 	mov.w	r0, #4294967295
+ 80015f8:	f04f 30ff 	mov.w	r0, #4294967295	; 0xffffffff
  80015fc:	f7ff ff8e 	bl	800151c <__NVIC_SetPriority>
   SysTick->VAL   = 0UL;                                             /* Load the SysTick Counter Value */
  8001600:	4b05      	ldr	r3, [pc, #20]	; (8001618 <SysTick_Config+0x40>)
