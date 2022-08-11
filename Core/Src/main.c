@@ -98,12 +98,18 @@ int main(void)
 
   //Check_Servos_Manually();
 
+  // Claibrate IMU
+  calibrateMPU9250(gyroBias, accelBias);
+  magcalMPU9250(magbias, magCalibration);
+  MPU9250SelfTest(SelfTest);
 
 
 
-//  Self_Test();
-//  Calibrate_MPU9250();
-//  Calibrate_AK8963();
+  // Init IMU
+  resetMPU9250();
+  initMPU9250(AFS_8G, GFS_250DPS, 1);
+  MinitAK8963Slave(MFS_16BITS, Mmode, magCalibration);
+
 
 
   /* USER CODE END 2 */

@@ -20,17 +20,13 @@
 #define delay(X) HAL_Delay(X)
 
 
-uint8_t Mmode = 0x06;        // Either 8 Hz 0x02) or 100 Hz (0x06) magnetometer data ODR
+Mmode = (uint8_t)0x06;        // Either 8 Hz 0x02) or 100 Hz (0x06) magnetometer data ODR
 
-uint8_t _intPin;
-float _aRes;
-float _gRes;
-float _mRes;
-uint8_t _Mmode;
-float _fuseROMx;
-float _fuseROMy;
-float _fuseROMz;
-float _magCalibration[3];
+
+int delt_t = 0; // used to control display output rate
+int count = 0;  // used to control display output rate
+
+
 
 HAL_StatusTypeDef status; // for testing purposes
 
@@ -138,6 +134,7 @@ float getAres(Ascale ascale) {
          break;
   }
 }
+
 
 
 
@@ -403,6 +400,10 @@ void initMPU9250(uint8_t Ascale, uint8_t Gscale, uint8_t sampleRate)
  // c =| 0x00; // Set Fchoice for the gyro to 11 by writing its inverse to bits 1:0 of GYRO_CONFIG
   writeByte(MPU9250_ADDRESS, GYRO_CONFIG, c ); // Write new GYRO_CONFIG value to register
 
+  c = 0b10000000;
+
+  writeByte(MPU9250_ADDRESS, CONFIG, c); // setting gyro sampling rate to 8kHz
+
  // Set accelerometer full-scale range configuration
   c = readByte(MPU9250_ADDRESS, ACCEL_CONFIG); // get current ACCEL_CONFIG register value
  // c = c & ~0xE0; // Clear self-test bits [7:5]
@@ -415,7 +416,6 @@ void initMPU9250(uint8_t Ascale, uint8_t Gscale, uint8_t sampleRate)
  // accel_fchoice_b bit [3]; in this case the bandwidth is 1.13 kHz
   c = readByte(MPU9250_ADDRESS, ACCEL_CONFIG2); // get current ACCEL_CONFIG2 register value
   c = c & ~0x0F; // Clear accel_fchoice_b (bit 3) and A_DLPFG (bits [2:0])
-  c = c | 0x03;  // Set accelerometer rate to 1 kHz and bandwidth to 41 Hz
   writeByte(MPU9250_ADDRESS, ACCEL_CONFIG2, c); // Write new ACCEL_CONFIG2 register value
 
  // The accelerometer, gyro, and thermometer are set to 1 kHz sample rates,
@@ -633,7 +633,7 @@ void calibrateMPU9250(float * dest1, float * dest2)
 }
 
 // Accelerometer and gyroscope self test; check calibration wrt factory settings
-void SelfTest(float * destination) // Should return percent deviation from factory trim values, +/- 14 or less deviation is a pass
+void MPU9250SelfTest(float * destination) // Should return percent deviation from factory trim values, +/- 14 or less deviation is a pass
 {
    uint8_t rawData[6] = {0, 0, 0, 0, 0, 0};
    uint8_t selfTest[6];
