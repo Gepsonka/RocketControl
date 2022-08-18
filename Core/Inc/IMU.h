@@ -220,28 +220,7 @@ typedef struct {
 
 uint8_t Mmode;        // Either 8 Hz 0x02) or 100 Hz (0x06) magnetometer data ODR
 
-uint8_t _intPin;
-float _aRes;
-float _gRes;
-float _mRes;
-uint8_t _Mmode;
-float _fuseROMx;
-float _fuseROMy;
-float _fuseROMz;
-float _magCalibration[3];
 
-int16_t accelCount[3];  // Stores the 16-bit signed accelerometer sensor output
-int16_t gyroCount[3];   // Stores the 16-bit signed gyro sensor output
-int16_t magCount[3];    // Stores the 16-bit signed magnetometer sensor output
-float magCalibration[3], magbias[3];  // Factory mag calibration and mag bias
-float gyroBias[3], accelBias[3]; // Bias corrections for gyro and accelerometer
-float ax, ay, az, gx, gy, gz, mx, my, mz; // variables to hold latest sensor data values
-int16_t tempCount;   // Stores the real internal chip temperature in degrees Celsius
-float temperature;
-float SelfTest[6];
-
-int delt_t; // used to control display output rate
-int count;  // used to control display output rate
 
 
 

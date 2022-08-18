@@ -25,9 +25,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "servo.h"
-#include "stdio.h"
-#include "IMU.h"
+
 
 /* USER CODE END Includes */
 
@@ -48,6 +46,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+extern lora_sx1276 LoRa;
+extern BMP280_HandleTypedef BMP280;
 
 /* USER CODE END PV */
 
@@ -93,22 +93,29 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM1_Init();
   MX_SPI1_Init();
+  MX_I2C3_Init();
   /* USER CODE BEGIN 2 */
   Servo_Init();
 
+  Check_Peripherals();
+
+  uint8_t res = lora_init(&LoRa, &hspi1, GPIOA, LoRa_NSS_Pin, LORA_BASE_FREQUENCY_EU);
+  bmp280_init_default_params(&BMP280);
+
   //Check_Servos_Manually();
 
+
   // Claibrate IMU
-  calibrateMPU9250(gyroBias, accelBias);
-  magcalMPU9250(magbias, magCalibration);
-  MPU9250SelfTest(SelfTest);
-
-
-
-  // Init IMU
-  resetMPU9250();
-  initMPU9250(AFS_8G, GFS_250DPS, 1);
-  MinitAK8963Slave(MFS_16BITS, Mmode, magCalibration);
+//  calibrateMPU9250(gyroBias, accelBias);
+//  magcalMPU9250(magbias, magCalibration);
+//  MPU9250SelfTest(SelfTest);
+//
+//
+//
+//  // Init IMU
+//  resetMPU9250();
+//  initMPU9250(AFS_8G, GFS_250DPS, 1);
+//  MinitAK8963Slave(MFS_16BITS, Mmode, magCalibration);
 
 
 
@@ -189,6 +196,11 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, 1);
+	  HAL_Delay(200);
+	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, 0);
+	  HAL_Delay(200);
+
   }
   /* USER CODE END Error_Handler_Debug */
 }

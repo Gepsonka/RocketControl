@@ -13,6 +13,7 @@
 #include "tim.h"
 
 #define NUM_OF_SERVO_MOTORS 4
+#define Wait_Till_Servo_Processes() Hal_Delay(21); // 21ms if the signal output drifts accidentally
 
 typedef enum {
 	INLINE_DUTY_CYCLE = 150, // Fins are parallel with the rocket, default position
@@ -72,6 +73,7 @@ void _Move_Servo(int8_t num_of_servo, int8_t degree);
 
 void _Check_And_Switch_Allowed_Degree(uint8_t* deg);
 
+void __Test_Servos();
 
 
 

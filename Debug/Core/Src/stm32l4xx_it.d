@@ -29,7 +29,10 @@ Core/Src/stm32l4xx_it.o: ../Core/Src/stm32l4xx_it.c ../Core/Inc/main.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_spi_ex.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim.h \
  ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim_ex.h \
- ../Core/Inc/stm32l4xx_it.h
+ ../Core/Inc/servo.h ../Core/Inc/tim.h ../Core/Inc/main.h \
+ ../Core/Inc/IMU.h ../Core/Inc/i2c.h ../Core/Inc/sysinit.h \
+ ../Core/Inc/gpio.h ../Core/Inc/spi.h ../Core/Inc/bmp280.h \
+ ../Core/Inc/LoRa.h ../Core/Inc/stm32l4xx_it.h
 ../Core/Inc/main.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h:
 ../Core/Inc/stm32l4xx_hal_conf.h:
@@ -61,4 +64,14 @@ Core/Src/stm32l4xx_it.o: ../Core/Src/stm32l4xx_it.c ../Core/Inc/main.h \
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_spi_ex.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim.h:
 ../Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim_ex.h:
+../Core/Inc/servo.h:
+../Core/Inc/tim.h:
+../Core/Inc/main.h:
+../Core/Inc/IMU.h:
+../Core/Inc/i2c.h:
+../Core/Inc/sysinit.h:
+../Core/Inc/gpio.h:
+../Core/Inc/spi.h:
+../Core/Inc/bmp280.h:
+../Core/Inc/LoRa.h:
 ../Core/Inc/stm32l4xx_it.h:

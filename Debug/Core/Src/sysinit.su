@@ -1,0 +1,4 @@
+../Core/Src/sysinit.c:21:6:Check_Peripherals	8	static
+../Core/Src/sysinit.c:42:6:Is_BMP280_Available	16	static
+../Core/Src/sysinit.c:52:6:Is_IMU_Available	16	static
+../Core/Src/sysinit.c:62:6:Is_LoRa_Available	24	static
