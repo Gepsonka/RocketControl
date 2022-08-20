@@ -73,6 +73,11 @@ typedef struct {
   uint8_t             rx_base_addr;
 
   uint16_t            nss_pin;
+
+  GPIO_TypeDef *reset_port;
+
+  uint16_t reset_pin;
+
 } lora_sx1276;
 
 
@@ -90,7 +95,7 @@ typedef struct {
 //  - `LORA_OK` - modem initialized successfully
 //  - `LORA_ERROR` - initialization failed (e.g. no modem present on SPI bus / wrong NSS port/pin)
 uint8_t  lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
-                   uint16_t nss_pin, uint64_t freq);
+                   uint16_t nss_pin, GPIO_TypeDef *reset_port, uint16_t reset_pin, uint64_t freq);
 
 // Returns LoRa modem version number (usually 0x12)
 uint8_t  lora_version(lora_sx1276 *lora);
@@ -313,5 +318,8 @@ void lora_clear_interrupt_rx_all(lora_sx1276 *lora);
 
 // Clears TX interrupt on DIO0
 void     lora_clear_interrupt_tx_done(lora_sx1276 *lora);
+
+// Resetting LoRa
+void lora_reset(lora_sx1276 *lora);
 
 #endif

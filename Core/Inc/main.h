@@ -64,6 +64,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define MCO_Pin GPIO_PIN_0
 #define MCO_GPIO_Port GPIOA
+#define LoRa_Interrupt_Pin GPIO_PIN_3
+#define LoRa_Interrupt_GPIO_Port GPIOA
 #define LoRa_NSS_Pin GPIO_PIN_4
 #define LoRa_NSS_GPIO_Port GPIOA
 #define SWDIO_Pin GPIO_PIN_13
@@ -74,6 +76,8 @@ void Error_Handler(void);
 #define VCP_RX_GPIO_Port GPIOA
 #define LD3_Pin GPIO_PIN_3
 #define LD3_GPIO_Port GPIOB
+#define LoRa_Reset_Pin GPIO_PIN_5
+#define LoRa_Reset_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

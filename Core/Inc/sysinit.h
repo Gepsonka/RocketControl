@@ -28,6 +28,15 @@ bool Is_IMU_Available();
 
 bool Is_LoRa_Available();
 
+void Init_LoRa();
+
+void Init_BMP280();
+
+void Init_IMU();
+
+void Calibrate_BMP280();
+
+void Calibrate_IMU();
 
 
 

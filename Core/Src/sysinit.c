@@ -40,7 +40,7 @@ void Check_Peripherals(){
  * Checking if altimeter is available.
  */
 bool Is_BMP280_Available(){
-	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(&hi2c3, BMP280_I2C_ADDRESS_0 << 1, 50, 50);
+	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(&hi2c3, BMP280_I2C_ADDRESS_0 << 1, 10, 10);
 	if (status == HAL_OK){
 		return 1;
 	}
@@ -50,7 +50,7 @@ bool Is_BMP280_Available(){
 
 
 bool Is_IMU_Available(){
-	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(&hi2c1, MPU9250_ADDRESS, 50, 50);
+	HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(&hi2c1, MPU9250_ADDRESS, 10, 10);
 	if (status == HAL_OK){
 		return 1;
 	}
@@ -76,4 +76,9 @@ bool Is_LoRa_Available(){
 
 	return 0;
 }
+
+void Init_LoRa(){
+
+}
+
 

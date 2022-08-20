@@ -82,9 +82,13 @@
 #define DEBUGF(msg, ...)
 #endif
 
-lora_sx1276 LoRa;
+lora_sx1276 LoRa; // global lora config type
 
-//lora_sx1276 LoRa1278;
+// Higher level abstractions
+
+
+
+
 // SPI helpers //
 
 // Reads single register
@@ -673,9 +677,15 @@ void lora_clear_interrupt_rx_all(lora_sx1276 *lora)
   write_register(lora, REG_IRQ_FLAGS, IRQ_FLAGS_RX_ALL);
 }
 
+void lora_reset(lora_sx1276 *lora){
+	HAL_GPIO_WritePin(lora->reset_port, lora->reset_pin, GPIO_PIN_RESET);
+	HAL_Delay(1);
+	HAL_GPIO_WritePin(lora->reset_port, lora->reset_pin, GPIO_PIN_SET);
+	HAL_Delay(100);
+}
 
 uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
-    uint16_t nss_pin, uint64_t freq)
+    uint16_t nss_pin, GPIO_TypeDef *reset_port, uint16_t reset_pin,  uint64_t freq)
 {
   assert_param(lora && spi);
 
@@ -688,6 +698,9 @@ uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_p
   lora->tx_base_addr = LORA_DEFAULT_TX_ADDR;
   lora->rx_base_addr = LORA_DEFAULT_RX_ADDR;
   lora->spi_timeout = LORA_DEFAULT_SPI_TIMEOUT;
+
+  lora->reset_port = reset_port;
+  lora->reset_pin = reset_pin;
 
   // Check version
   uint8_t ver = lora_version(lora);

@@ -51,7 +51,7 @@
 /* USER CODE BEGIN PV */
 extern lora_sx1276 LoRa;
 extern BMP280_HandleTypedef bmp280;
-float pressure, bmp280_temperature, humidity;
+float pressure = 0, bmp280_temperature = 0, humidity = 0;
 
 /* USER CODE END PV */
 
@@ -103,7 +103,7 @@ int main(void)
 
   Check_Peripherals();
 
-  uint8_t res = lora_init(&LoRa, &hspi1, GPIOA, LoRa_NSS_Pin, LORA_BASE_FREQUENCY_EU);
+  uint8_t res = lora_init(&LoRa, &hspi1, LoRa_NSS_GPIO_Port, LoRa_NSS_Pin, LoRa_Reset_GPIO_Port, LoRa_Reset_Pin, LORA_BASE_FREQUENCY_EU);
   bmp280_init_default_params(&bmp280.params);
   bmp280.addr = BMP280_I2C_ADDRESS_0;
   bmp280.i2c = &hi2c3;
