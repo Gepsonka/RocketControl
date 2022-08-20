@@ -31,7 +31,7 @@ void Check_Peripherals(){
 		Error_Handler();
 	}
 
-	// Manual testing (look at the rocket fins)
+	// Manual testing (look at the rocket canards)
 	Are_Servos_Available();
 	HAL_Delay(2000);
 }

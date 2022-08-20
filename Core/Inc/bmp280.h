@@ -136,7 +136,6 @@ typedef struct {
 
 } BMP280_HandleTypedef;
 
-BMP280_HandleTypedef BMP280;
 
 
 

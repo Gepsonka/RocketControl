@@ -218,7 +218,6 @@ typedef struct {
 
 
 
-uint8_t Mmode;        // Either 8 Hz 0x02) or 100 Hz (0x06) magnetometer data ODR
 
 
 
