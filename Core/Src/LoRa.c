@@ -124,7 +124,7 @@ static void LoRa_Connecting_Handler(lora_sx1276 *lora){
 	uint8_t payload[LORA_MAX_PACKET_SIZE];
 	payload[0] = 0x10; // device address
 	payload[1] = 0xFF; // command id (need handshake)
-	lora_send_packet(lora, payload, 2);
+	uint8_t res = lora_send_packet(lora, payload, 2);
 }
 
 
@@ -155,14 +155,19 @@ void LoRa_Timer_Interrupt_Handler(lora_sx1276 *lora){
 	switch(lora->lora_status){
 	case LORA_CONNECTING:
 		LoRa_Connecting_Handler(lora);
+		break;
 	case LORA_CONNCETED:
 		LoRa_Connected_Handler(lora);
+		break;
 	case LORA_BROADCASTING_FLIGHT_DATA:
 		LoRa_Broadcast_Flight_Data_Handler(lora, (uint8_t*)12);
+		break;
 	case LORA_DISCONNECTED:
 		LoRa_Disconnected_Handler(lora);
+		break;
 	case LORA_ROCKET_ERROR_TRANSMIT:
 		LoRa_Error_Transmit_Handler(lora);
+		break;
 	}
 }
 
