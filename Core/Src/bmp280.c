@@ -52,6 +52,7 @@
 
 BMP280_HandleTypedef bmp280;
 
+Altimeter_Data altimeter_data;
 
 void bmp280_init_default_params(bmp280_params_t *params) {
 	params->mode = BMP280_MODE_NORMAL;

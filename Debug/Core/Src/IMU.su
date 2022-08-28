@@ -1,5 +1,5 @@
-../Core/Src/IMU.c:54:13:writeByte	32	static
-../Core/Src/IMU.c:59:16:readByte	40	static
+../Core/Src/IMU.c:54:6:IMUwriteByte	32	static
+../Core/Src/IMU.c:59:9:IMUreadByte	40	static
 ../Core/Src/IMU.c:66:13:readBytes	32	static
 ../Core/Src/IMU.c:71:9:getMPU9250ID	16	static
 ../Core/Src/IMU.c:77:9:getAK8963CID	16	static

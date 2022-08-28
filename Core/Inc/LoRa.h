@@ -8,6 +8,8 @@
 
 #define LORA_MAX_PACKET_SIZE               128
 
+#define DEVICE_LORA_ADD 0x10;
+
 // Operational frequency
 #define MHZ                                1000000LLU
 #define LORA_BASE_FREQUENCY_US             (915LLU*MHZ)
@@ -57,6 +59,29 @@ enum {
   LORA_BW_LAST,
 };
 
+
+/**
+ * LoRa transmit operations.
+ */
+typedef enum {
+	LORA_DISCONNECTED,
+	LORA_CONNCETED,
+	LORA_CONNECTING,
+	LORA_BROADCASTING_FLIGHT_DATA,
+	LORA_ROCKET_ERROR_TRANSMIT
+} LoRa_Status;
+
+
+/**
+ * LoRa receive operation IDs.
+ */
+enum {
+	LORA_CONNECTION_ESTABLISHED,
+	LORA_ROCKET_DIRECTION_CHANGE,
+
+};
+
+
 // LORA definition
 typedef struct {
   // SPI parameters
@@ -78,9 +103,27 @@ typedef struct {
 
   uint16_t reset_pin;
 
+  uint8_t device_add;
+
+  volatile LoRa_Status lora_status;
+
+  char error_msg[80]; // 80 char can be displayed on the LCD when displaying error
+
 } lora_sx1276;
 
 
+// Higher level abstractions
+
+void LoRa_Timer_Interrupt_Handler(lora_sx1276 *lora);
+
+void Set_LoRa_Connecting(lora_sx1276 *lora);
+void Set_LoRa_Connected(lora_sx1276 *lora);
+void Set_LoRa_Broadcast_FLight_Info(lora_sx1276 *lora);
+void Set_LoRa_Disconnected(lora_sx1276 *lora);
+
+void LoRa_Send_Flight_Data(lora_sx1276 *lora);
+
+void Wait_For_LoRa_Connection(lora_sx1276 *lora);
 
 // LORA Module setup //
 
@@ -95,7 +138,7 @@ typedef struct {
 //  - `LORA_OK` - modem initialized successfully
 //  - `LORA_ERROR` - initialization failed (e.g. no modem present on SPI bus / wrong NSS port/pin)
 uint8_t  lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
-                   uint16_t nss_pin, GPIO_TypeDef *reset_port, uint16_t reset_pin, uint64_t freq);
+                   uint16_t nss_pin, GPIO_TypeDef *reset_port, uint16_t reset_pin, uint64_t freq, uint8_t dev_add);
 
 // Returns LoRa modem version number (usually 0x12)
 uint8_t  lora_version(lora_sx1276 *lora);

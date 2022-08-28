@@ -1,5 +1,9 @@
-../Core/Src/sysinit.c:21:6:Check_Peripherals	8	static
-../Core/Src/sysinit.c:42:6:Is_BMP280_Available	16	static
-../Core/Src/sysinit.c:52:6:Is_IMU_Available	16	static
-../Core/Src/sysinit.c:62:6:Is_LoRa_Available	24	static
-../Core/Src/sysinit.c:80:6:Init_LoRa	4	static
+../Core/Src/sysinit.c:26:6:Check_Peripherals	8	static
+../Core/Src/sysinit.c:44:6:Init_Peripherals	8	static
+../Core/Src/sysinit.c:55:6:Is_BMP280_Available	16	static
+../Core/Src/sysinit.c:65:6:Is_IMU_Available	16	static
+../Core/Src/sysinit.c:75:6:Is_LoRa_Available	24	static
+../Core/Src/sysinit.c:92:6:Init_LoRa	32	static
+../Core/Src/sysinit.c:105:6:Init_BMP280	16	static
+../Core/Src/sysinit.c:114:6:Init_IMU	16	static
+../Core/Src/sysinit.c:126:6:Calibrate_IMU	8	static

@@ -66,6 +66,7 @@ void Error_Handler(void);
 #define MCO_GPIO_Port GPIOA
 #define LoRa_Interrupt_Pin GPIO_PIN_3
 #define LoRa_Interrupt_GPIO_Port GPIOA
+#define LoRa_Interrupt_EXTI_IRQn EXTI3_IRQn
 #define LoRa_NSS_Pin GPIO_PIN_4
 #define LoRa_NSS_GPIO_Port GPIOA
 #define SWDIO_Pin GPIO_PIN_13

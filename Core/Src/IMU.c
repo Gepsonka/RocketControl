@@ -51,12 +51,12 @@ int count = 0;  // used to control display output rate
 HAL_StatusTypeDef status; // for testing purposes
 
 
-static void writeByte(uint8_t address, uint8_t subAddress, uint8_t data)
+void IMUwriteByte(uint8_t address, uint8_t subAddress, uint8_t data)
 {
 	status = HAL_I2C_Mem_Write(&hi2c1, address, subAddress, 1, (uint8_t*)data, 1, HAL_MAX_DELAY);
 }
 
-static uint8_t readByte(uint8_t address, uint8_t subAddress)
+uint8_t IMUreadByte(uint8_t address, uint8_t subAddress)
 {
 	uint8_t dest;
 	status = HAL_I2C_Mem_Read(&hi2c1, address, subAddress, 1, &dest, 1, HAL_MAX_DELAY);
@@ -70,21 +70,21 @@ static void readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_
 
 uint8_t getMPU9250ID()
 {
-  uint8_t c = readByte(MPU9250_ADDRESS, WHO_AM_I_MPU9250);  // Read WHO_AM_I register for MPU-9250
+  uint8_t c = IMUreadByte(MPU9250_ADDRESS, WHO_AM_I_MPU9250);  // Read WHO_AM_I register for MPU-9250
   return c;
 }
 
 uint8_t getAK8963CID()
 {
 //  uint8_t c = readByte(AK8963_ADDRESS, WHO_AM_I_AK8963);  // Read WHO_AM_I register for MPU-9250
-  writeByte(MPU9250_ADDRESS, USER_CTRL, 0x20);    // Enable I2C Master mode
-  writeByte(MPU9250_ADDRESS, I2C_MST_CTRL, 0x0D); // I2C configuration multi-master I2C 400KHz
+  IMUwriteByte(MPU9250_ADDRESS, USER_CTRL, 0x20);    // Enable I2C Master mode
+  IMUwriteByte(MPU9250_ADDRESS, I2C_MST_CTRL, 0x0D); // I2C configuration multi-master I2C 400KHz
 
-  writeByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS | 0x80);    // Set the I2C slave address of AK8963 and set for read.
-  writeByte(MPU9250_ADDRESS, I2C_SLV0_REG, WHO_AM_I_AK8963);           // I2C slave 0 register address from where to begin data transfer
-  writeByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and transfer 1 byte
+  IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS | 0x80);    // Set the I2C slave address of AK8963 and set for read.
+  IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_REG, WHO_AM_I_AK8963);           // I2C slave 0 register address from where to begin data transfer
+  IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and transfer 1 byte
   delay(10);
-  uint8_t c = readByte(MPU9250_ADDRESS, EXT_SENS_DATA_00);             // Read the WHO_AM_I byte
+  uint8_t c = IMUreadByte(MPU9250_ADDRESS, EXT_SENS_DATA_00);             // Read the WHO_AM_I byte
   return c;
 }
 
@@ -163,32 +163,32 @@ void accelWakeOnMotion()
   // Set accelerometer sample rate configuration
   // It is possible to get a 4 kHz sample rate from the accelerometer by choosing 1 for
   // accel_fchoice_b bit [3]; in this case the bandwidth is 1.13 kHz
-  uint8_t c = readByte(MPU9250_ADDRESS, ACCEL_CONFIG2); // get current ACCEL_CONFIG2 register value
+  uint8_t c = IMUreadByte(MPU9250_ADDRESS, ACCEL_CONFIG2); // get current ACCEL_CONFIG2 register value
   c = c & ~0x0F; // Clear accel_fchoice_b (bit 3) and A_DLPFG (bits [2:0])
   c = c | 0x01;  // Set accelerometer rate to 1 kHz and bandwidth to 184 Hz
-  writeByte(MPU9250_ADDRESS, ACCEL_CONFIG2, c); // Write new ACCEL_CONFIG2 register value
+  IMUwriteByte(MPU9250_ADDRESS, ACCEL_CONFIG2, c); // Write new ACCEL_CONFIG2 register value
 
   // Configure Interrupts and Bypass Enable
   // Set interrupt pin active high, push-pull, hold interrupt pin level HIGH until interrupt cleared,
   // clear on read of INT_STATUS, and enable I2C_BYPASS_EN so additional chips
   // can join the I2C bus and all can be controlled by the Arduino as master
-   writeByte(MPU9250_ADDRESS, INT_PIN_CFG, 0x12);  // INT is 50 microsecond pulse and any read to clear
-   writeByte(MPU9250_ADDRESS, INT_ENABLE, 0x41);   // Enable data ready (bit 0) and wake on motion (bit 6)  interrupt
+   IMUwriteByte(MPU9250_ADDRESS, INT_PIN_CFG, 0x12);  // INT is 50 microsecond pulse and any read to clear
+   IMUwriteByte(MPU9250_ADDRESS, INT_ENABLE, 0x41);   // Enable data ready (bit 0) and wake on motion (bit 6)  interrupt
 
    // enable wake on motion detection logic (bit 7) and compare current sample to previous sample (bit 6)
-   writeByte(MPU9250_ADDRESS, MOT_DETECT_CTRL, 0xC0);
+   IMUwriteByte(MPU9250_ADDRESS, MOT_DETECT_CTRL, 0xC0);
 
    // set accel threshold for wake up at  mG per LSB, 1 - 255 LSBs == 0 - 1020 mg), pic 0x19 for 25 mg
-   writeByte(MPU9250_ADDRESS, WOM_THR, 0x19);
+   IMUwriteByte(MPU9250_ADDRESS, WOM_THR, 0x19);
 
   // set sample rate in low power mode
   /* choices are 0 == 0.24 Hz, 1 == 0.49 Hz, 2 == 0.98 Hz, 3 == 1.958 Hz, 4 == 3.91 Hz, 5 == 7.81 Hz
    *             6 == 15.63 Hz, 7 == 31.25 Hz, 8 == 62.50 Hz, 9 = 125 Hz, 10 == 250 Hz, and 11 == 500 Hz
    */
-  writeByte(MPU9250_ADDRESS, LP_ACCEL_ODR, 0x02);
+  IMUwriteByte(MPU9250_ADDRESS, LP_ACCEL_ODR, 0x02);
 
-  c = readByte(MPU9250_ADDRESS, PWR_MGMT_1);
-  writeByte(MPU9250_ADDRESS, PWR_MGMT_1, c | 0x20);     // Write bit 5 to enable accel cycling
+  c = IMUreadByte(MPU9250_ADDRESS, PWR_MGMT_1);
+  IMUwriteByte(MPU9250_ADDRESS, PWR_MGMT_1, c | 0x20);     // Write bit 5 to enable accel cycling
 
   gyromagSleep();
   delay(100); // Wait for all registers to reset
@@ -199,10 +199,10 @@ void accelWakeOnMotion()
 void gyromagSleep()
 {
   uint8_t temp = 0;
-  temp = readByte(AK8963_ADDRESS, AK8963_CNTL);
-  writeByte(AK8963_ADDRESS, AK8963_CNTL, temp & ~(0x0F) ); // Clear bits 0 - 3 to power down magnetometer
-  temp = readByte(MPU9250_ADDRESS, PWR_MGMT_1);
-  writeByte(MPU9250_ADDRESS, PWR_MGMT_1, temp | 0x10);     // Write bit 4 to enable gyro standby
+  temp = IMUreadByte(AK8963_ADDRESS, AK8963_CNTL);
+  IMUwriteByte(AK8963_ADDRESS, AK8963_CNTL, temp & ~(0x0F) ); // Clear bits 0 - 3 to power down magnetometer
+  temp = IMUreadByte(MPU9250_ADDRESS, PWR_MGMT_1);
+  IMUwriteByte(MPU9250_ADDRESS, PWR_MGMT_1, temp | 0x10);     // Write bit 4 to enable gyro standby
   delay(10); // Wait for all registers to reset
 }
 
@@ -210,10 +210,10 @@ void gyromagSleep()
 void gyromagWake(uint8_t Mmode)
 {
   uint8_t temp = 0;
-  temp = readByte(AK8963_ADDRESS, AK8963_CNTL);
-  writeByte(AK8963_ADDRESS, AK8963_CNTL, temp | Mmode ); // Reset normal mode for  magnetometer
-  temp = readByte(MPU9250_ADDRESS, PWR_MGMT_1);
-  writeByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x01);   // return gyro and accel normal mode
+  temp = IMUreadByte(AK8963_ADDRESS, AK8963_CNTL);
+  IMUwriteByte(AK8963_ADDRESS, AK8963_CNTL, temp | Mmode ); // Reset normal mode for  magnetometer
+  temp = IMUreadByte(MPU9250_ADDRESS, PWR_MGMT_1);
+  IMUwriteByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x01);   // return gyro and accel normal mode
   delay(10); // Wait for all registers to reset
 }
 
@@ -221,7 +221,7 @@ void gyromagWake(uint8_t Mmode)
 void resetMPU9250()
 {
   // reset device
-  writeByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x80); // Set bit 7 to reset MPU9250
+  IMUwriteByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x80); // Set bit 7 to reset MPU9250
   delay(100); // Wait for all registers to reset
 }
 
@@ -261,25 +261,25 @@ uint8_t checkNewMagData()
 {
 	uint8_t test;
 //  test = (readByte(AK8963_ADDRESS, AK8963_ST1) & 0x01);
-  writeByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS | 0x80);    // Set the I2C slave address of AK8963 and set for read.
-  writeByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_ST1);                // I2C slave 0 register address from where to begin data transfer
-  writeByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and transfer 1 byte
+  IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS | 0x80);    // Set the I2C slave address of AK8963 and set for read.
+  IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_ST1);                // I2C slave 0 register address from where to begin data transfer
+  IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and transfer 1 byte
   delay(2);
-  test = (readByte(MPU9250_ADDRESS, EXT_SENS_DATA_00) & 0x01);         // Check data ready status byte
+  test = (IMUreadByte(MPU9250_ADDRESS, EXT_SENS_DATA_00) & 0x01);         // Check data ready status byte
   return test;
 }
 
 uint8_t checkNewAccelGyroData()
 {
 	uint8_t test;
-  test = (readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01);
+  test = (IMUreadByte(MPU9250_ADDRESS, INT_STATUS) & 0x01);
   return test;
 }
 
 uint8_t checkWakeOnMotion()
 {
 	uint8_t test;
-  test = (readByte(MPU9250_ADDRESS, INT_STATUS) & 0x40);
+  test = (IMUreadByte(MPU9250_ADDRESS, INT_STATUS) & 0x40);
   return test;
 }
 
@@ -288,9 +288,9 @@ void MreadMagData(int16_t * destination)
 {
   uint8_t rawData[7];  // x/y/z gyro register data, ST2 register stored here, must read ST2 at end of data acquisition
 //  readBytes(AK8963_ADDRESS, AK8963_XOUT_L, 7, &rawData[0]);  // Read the six raw data and ST2 registers sequentially into data array
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS | 0x80);    // Set the I2C slave address of AK8963 and set for read.
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_XOUT_L);             // I2C slave 0 register address from where to begin data transfer
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x87);                     // Enable I2C and read 7 bytes
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS | 0x80);    // Set the I2C slave address of AK8963 and set for read.
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_XOUT_L);             // I2C slave 0 register address from where to begin data transfer
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x87);                     // Enable I2C and read 7 bytes
    delay(2);
    readBytes(MPU9250_ADDRESS, EXT_SENS_DATA_00, 7, &rawData[0]);        // Read the x-, y-, and z-axis calibration values
    uint8_t c = rawData[6]; // End data read by reading ST2 register
@@ -312,9 +312,9 @@ void initAK8963(uint8_t Mscale, uint8_t Mmode, float * magCalibration)
 {
   // First extract the factory calibration for each magnetometer axis
   uint8_t rawData[3];  // x/y/z gyro calibration data stored here
-  writeByte(AK8963_ADDRESS, AK8963_CNTL, 0x00); // Power down magnetometer
+  IMUwriteByte(AK8963_ADDRESS, AK8963_CNTL, 0x00); // Power down magnetometer
   delay(10);
-  writeByte(AK8963_ADDRESS, AK8963_CNTL, 0x0F); // Enter Fuse ROM access mode
+  IMUwriteByte(AK8963_ADDRESS, AK8963_CNTL, 0x0F); // Enter Fuse ROM access mode
   delay(10);
   readBytes(AK8963_ADDRESS, AK8963_ASAX, 3, &rawData[0]);  // Read the x-, y-, and z-axis calibration values
   magCalibration[0] =  (float)(rawData[0] - 128)/256.0f + 1.0f;   // Return x-axis sensitivity adjustment values, etc.
@@ -324,12 +324,12 @@ void initAK8963(uint8_t Mscale, uint8_t Mmode, float * magCalibration)
   _magCalibration[1] = magCalibration[1];
   _magCalibration[2] = magCalibration[2];
   _Mmode = Mmode;
-  writeByte(AK8963_ADDRESS, AK8963_CNTL, 0x00); // Power down magnetometer
+  IMUwriteByte(AK8963_ADDRESS, AK8963_CNTL, 0x00); // Power down magnetometer
   delay(10);
   // Configure the magnetometer for continuous read and highest resolution
   // set Mscale bit 4 to 1 (0) to enable 16 (14) bit resolution in CNTL register,
   // and enable continuous mode data acquisition Mmode (bits [3:0]), 0010 for 8 Hz and 0110 for 100 Hz sample rates
-  writeByte(AK8963_ADDRESS, AK8963_CNTL, Mscale << 4 | Mmode); // Set magnetometer data resolution and sample ODR
+  IMUwriteByte(AK8963_ADDRESS, AK8963_CNTL, Mscale << 4 | Mmode); // Set magnetometer data resolution and sample ODR
   delay(10);
 }
 
@@ -338,25 +338,25 @@ void MinitAK8963Slave(uint8_t Mscale, uint8_t Mmode, float * magCalibration)
    // First extract the factory calibration for each magnetometer axis
    uint8_t rawData[3];  // x/y/z gyro calibration data stored here
 
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_CNTL);              // I2C slave 0 register address from where to begin data transfer
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_DO, 0x01);                       // Reset AK8963
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and write 1 byte
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_CNTL);              // I2C slave 0 register address from where to begin data transfer
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_DO, 0x01);                       // Reset AK8963
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and write 1 byte
    delay(50);
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_DO, 0x00);                       // Power down magnetometer
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and write 1 byte
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_DO, 0x00);                       // Power down magnetometer
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and write 1 byte
    delay(50);
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_DO, 0x0F);                       // Enter fuze mode
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and write 1 byte
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_DO, 0x0F);                       // Enter fuze mode
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and write 1 byte
    delay(50);
 
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS | 0x80);    // Set the I2C slave address of AK8963 and set for read.
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_ASAX);               // I2C slave 0 register address from where to begin data transfer
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x83);                     // Enable I2C and read 3 bytes
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS | 0x80);    // Set the I2C slave address of AK8963 and set for read.
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_ASAX);               // I2C slave 0 register address from where to begin data transfer
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x83);                     // Enable I2C and read 3 bytes
    delay(50);
    readBytes(MPU9250_ADDRESS, EXT_SENS_DATA_00, 3, &rawData[0]);        // Read the x-, y-, and z-axis calibration values
    magCalibration[0] =  (float)(rawData[0] - 128)/256.0f + 1.0f;        // Return x-axis sensitivity adjustment values, etc.
@@ -367,23 +367,23 @@ void MinitAK8963Slave(uint8_t Mscale, uint8_t Mmode, float * magCalibration)
    _magCalibration[2] = magCalibration[2];
    _Mmode = Mmode;
 
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_DO, 0x00);                       // Power down magnetometer
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and transfer 1 byte
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_DO, 0x00);                       // Power down magnetometer
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and transfer 1 byte
    delay(50);
 
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS);           // Set the I2C slave address of AK8963 and set for write.
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
    // Configure the magnetometer for continuous read and highest resolution
    // set Mscale bit 4 to 1 (0) to enable 16 (14) bit resolution in CNTL register,
    // and enable continuous mode data acquisition Mmode (bits [3:0]), 0010 for 8 Hz and 0110 for 100 Hz sample rates
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_DO, Mscale << 4 | Mmode);        // Set magnetometer data resolution and sample ODR
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and transfer 1 byte
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_DO, Mscale << 4 | Mmode);        // Set magnetometer data resolution and sample ODR
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and transfer 1 byte
    delay(50);
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS | 0x80);    // Set the I2C slave address of AK8963 and set for read.
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
-   writeByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and transfer 1 byte
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_ADDR, AK8963_ADDRESS | 0x80);    // Set the I2C slave address of AK8963 and set for read.
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_CNTL);               // I2C slave 0 register address from where to begin data transfer
+   IMUwriteByte(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x81);                     // Enable I2C and transfer 1 byte
    delay(50);
 }
 
@@ -391,11 +391,11 @@ void MinitAK8963Slave(uint8_t Mscale, uint8_t Mmode, float * magCalibration)
 void initMPU9250(uint8_t Ascale, uint8_t Gscale, uint8_t sampleRate)
 {
  // wake up device
-  writeByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x00); // Clear sleep mode bit (6), enable all sensors
+  IMUwriteByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x00); // Clear sleep mode bit (6), enable all sensors
   delay(100); // Wait for all registers to reset
 
  // get stable time source
-  writeByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x01);  // Auto select clock source to be PLL gyroscope reference if ready else
+  IMUwriteByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x01);  // Auto select clock source to be PLL gyroscope reference if ready else
   delay(200);
 
  // Configure Gyro and Thermometer
@@ -404,39 +404,39 @@ void initMPU9250(uint8_t Ascale, uint8_t Gscale, uint8_t sampleRate)
  // be higher than 1 / 0.0059 = 170 Hz
  // DLPF_CFG = bits 2:0 = 011; this limits the sample rate to 1000 Hz for both
  // With the MPU9250, it is possible to get gyro sample rates of 32 kHz (!), 8 kHz, or 1 kHz
-  writeByte(MPU9250_ADDRESS, CONFIG, 0x03);
+  IMUwriteByte(MPU9250_ADDRESS, CONFIG, 0x03);
 
  // Set sample rate = gyroscope output rate/(1 + SMPLRT_DIV)
-  writeByte(MPU9250_ADDRESS, SMPLRT_DIV, sampleRate);  // Use a 200 Hz rate; a rate consistent with the filter update rate
+  IMUwriteByte(MPU9250_ADDRESS, SMPLRT_DIV, sampleRate);  // Use a 200 Hz rate; a rate consistent with the filter update rate
                                                        // determined inset in CONFIG above
 
  // Set gyroscope full scale range
  // Range selects FS_SEL and AFS_SEL are 0 - 3, so 2-bit values are left-shifted into positions 4:3
-  uint8_t c = readByte(MPU9250_ADDRESS, GYRO_CONFIG); // get current GYRO_CONFIG register value
+  uint8_t c = IMUreadByte(MPU9250_ADDRESS, GYRO_CONFIG); // get current GYRO_CONFIG register value
  // c = c & ~0xE0; // Clear self-test bits [7:5]
   c = c & ~0x02; // Clear Fchoice bits [1:0]
   c = c & ~0x18; // Clear AFS bits [4:3]
   c = c | Gscale << 3; // Set full scale range for the gyro
  // c =| 0x00; // Set Fchoice for the gyro to 11 by writing its inverse to bits 1:0 of GYRO_CONFIG
-  writeByte(MPU9250_ADDRESS, GYRO_CONFIG, c ); // Write new GYRO_CONFIG value to register
+  IMUwriteByte(MPU9250_ADDRESS, GYRO_CONFIG, c ); // Write new GYRO_CONFIG value to register
 
   c = 0b10000000;
 
-  writeByte(MPU9250_ADDRESS, CONFIG, c); // setting gyro sampling rate to 8kHz
+  IMUwriteByte(MPU9250_ADDRESS, CONFIG, c); // setting gyro sampling rate to 8kHz
 
  // Set accelerometer full-scale range configuration
-  c = readByte(MPU9250_ADDRESS, ACCEL_CONFIG); // get current ACCEL_CONFIG register value
+  c = IMUreadByte(MPU9250_ADDRESS, ACCEL_CONFIG); // get current ACCEL_CONFIG register value
  // c = c & ~0xE0; // Clear self-test bits [7:5]
   c = c & ~0x18;  // Clear AFS bits [4:3]
   c = c | Ascale << 3; // Set full scale range for the accelerometer
-  writeByte(MPU9250_ADDRESS, ACCEL_CONFIG, c); // Write new ACCEL_CONFIG register value
+  IMUwriteByte(MPU9250_ADDRESS, ACCEL_CONFIG, c); // Write new ACCEL_CONFIG register value
 
  // Set accelerometer sample rate configuration
  // It is possible to get a 4 kHz sample rate from the accelerometer by choosing 1 for
  // accel_fchoice_b bit [3]; in this case the bandwidth is 1.13 kHz
-  c = readByte(MPU9250_ADDRESS, ACCEL_CONFIG2); // get current ACCEL_CONFIG2 register value
+  c = IMUreadByte(MPU9250_ADDRESS, ACCEL_CONFIG2); // get current ACCEL_CONFIG2 register value
   c = c & ~0x0F; // Clear accel_fchoice_b (bit 3) and A_DLPFG (bits [2:0])
-  writeByte(MPU9250_ADDRESS, ACCEL_CONFIG2, c); // Write new ACCEL_CONFIG2 register value
+  IMUwriteByte(MPU9250_ADDRESS, ACCEL_CONFIG2, c); // Write new ACCEL_CONFIG2 register value
 
  // The accelerometer, gyro, and thermometer are set to 1 kHz sample rates,
  // but all these rates are further reduced by a factor of 5 to 200 Hz because of the SMPLRT_DIV setting
@@ -445,14 +445,14 @@ void initMPU9250(uint8_t Ascale, uint8_t Gscale, uint8_t sampleRate)
   // Set interrupt pin active high, push-pull, hold interrupt pin level HIGH until interrupt cleared,
   // clear on read of INT_STATUS, and enable I2C_BYPASS_EN so additional chips
   // can join the I2C bus and all can be controlled by the Arduino as master
-   writeByte(MPU9250_ADDRESS, INT_PIN_CFG, 0x10);  // INT is 50 microsecond pulse and any read to clear
-   writeByte(MPU9250_ADDRESS, INT_ENABLE, 0x01);  // Enable data ready (bit 0) interrupt
+   IMUwriteByte(MPU9250_ADDRESS, INT_PIN_CFG, 0x10);  // INT is 50 microsecond pulse and any read to clear
+   IMUwriteByte(MPU9250_ADDRESS, INT_ENABLE, 0x01);  // Enable data ready (bit 0) interrupt
    delay(100);
 
-  writeByte(MPU9250_ADDRESS, USER_CTRL, 0x20);          // Enable I2C Master mode
-  writeByte(MPU9250_ADDRESS, I2C_MST_CTRL, 0x1D);       // I2C configuration STOP after each transaction, master I2C bus at 400 KHz
-  writeByte(MPU9250_ADDRESS, I2C_MST_DELAY_CTRL, 0x81); // Use blocking data retreival and enable delay for mag sample rate mismatch
-  writeByte(MPU9250_ADDRESS, I2C_SLV4_CTRL, 0x01);      // Delay mag data retrieval to once every other accel/gyro data sample
+  IMUwriteByte(MPU9250_ADDRESS, USER_CTRL, 0x20);          // Enable I2C Master mode
+  IMUwriteByte(MPU9250_ADDRESS, I2C_MST_CTRL, 0x1D);       // I2C configuration STOP after each transaction, master I2C bus at 400 KHz
+  IMUwriteByte(MPU9250_ADDRESS, I2C_MST_DELAY_CTRL, 0x81); // Use blocking data retreival and enable delay for mag sample rate mismatch
+  IMUwriteByte(MPU9250_ADDRESS, I2C_SLV4_CTRL, 0x01);      // Delay mag data retrieval to once every other accel/gyro data sample
 }
 
 
@@ -513,40 +513,40 @@ void calibrateMPU9250(float * dest1, float * dest2)
   int32_t gyro_bias[3]  = {0, 0, 0}, accel_bias[3] = {0, 0, 0};
 
  // reset device
-  writeByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x80); // Write a one to bit 7 reset bit; toggle reset device
+  IMUwriteByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x80); // Write a one to bit 7 reset bit; toggle reset device
   delay(100);
 
  // get stable time source; Auto select clock source to be PLL gyroscope reference if ready
  // else use the internal oscillator, bits 2:0 = 001
-  writeByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x01);
-  writeByte(MPU9250_ADDRESS, PWR_MGMT_2, 0x00);
+  IMUwriteByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x01);
+  IMUwriteByte(MPU9250_ADDRESS, PWR_MGMT_2, 0x00);
   delay(200);
 
 // Configure device for bias calculation
-  writeByte(MPU9250_ADDRESS, INT_ENABLE, 0x00);   // Disable all interrupts
-  writeByte(MPU9250_ADDRESS, FIFO_EN, 0x00);      // Disable FIFO
-  writeByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x00);   // Turn on internal clock source
-  writeByte(MPU9250_ADDRESS, I2C_MST_CTRL, 0x00); // Disable I2C master
-  writeByte(MPU9250_ADDRESS, USER_CTRL, 0x00);    // Disable FIFO and I2C master modes
-  writeByte(MPU9250_ADDRESS, USER_CTRL, 0x0C);    // Reset FIFO and DMP
+  IMUwriteByte(MPU9250_ADDRESS, INT_ENABLE, 0x00);   // Disable all interrupts
+  IMUwriteByte(MPU9250_ADDRESS, FIFO_EN, 0x00);      // Disable FIFO
+  IMUwriteByte(MPU9250_ADDRESS, PWR_MGMT_1, 0x00);   // Turn on internal clock source
+  IMUwriteByte(MPU9250_ADDRESS, I2C_MST_CTRL, 0x00); // Disable I2C master
+  IMUwriteByte(MPU9250_ADDRESS, USER_CTRL, 0x00);    // Disable FIFO and I2C master modes
+  IMUwriteByte(MPU9250_ADDRESS, USER_CTRL, 0x0C);    // Reset FIFO and DMP
   delay(15);
 
 // Configure MPU6050 gyro and accelerometer for bias calculation
-  writeByte(MPU9250_ADDRESS, CONFIG, 0x01);      // Set low-pass filter to 188 Hz
-  writeByte(MPU9250_ADDRESS, SMPLRT_DIV, 0x00);  // Set sample rate to 1 kHz
-  writeByte(MPU9250_ADDRESS, GYRO_CONFIG, 0x00);  // Set gyro full-scale to 250 degrees per second, maximum sensitivity
-  writeByte(MPU9250_ADDRESS, ACCEL_CONFIG, 0x00); // Set accelerometer full-scale to 2 g, maximum sensitivity
+  IMUwriteByte(MPU9250_ADDRESS, CONFIG, 0x01);      // Set low-pass filter to 188 Hz
+  IMUwriteByte(MPU9250_ADDRESS, SMPLRT_DIV, 0x00);  // Set sample rate to 1 kHz
+  IMUwriteByte(MPU9250_ADDRESS, GYRO_CONFIG, 0x00);  // Set gyro full-scale to 250 degrees per second, maximum sensitivity
+  IMUwriteByte(MPU9250_ADDRESS, ACCEL_CONFIG, 0x00); // Set accelerometer full-scale to 2 g, maximum sensitivity
 
   uint16_t  gyrosensitivity  = 131;   // = 131 LSB/degrees/sec
   uint16_t  accelsensitivity = 16384;  // = 16384 LSB/g
 
     // Configure FIFO to capture accelerometer and gyro data for bias calculation
-  writeByte(MPU9250_ADDRESS, USER_CTRL, 0x40);   // Enable FIFO
-  writeByte(MPU9250_ADDRESS, FIFO_EN, 0x78);     // Enable gyro and accelerometer sensors for FIFO  (max size 512 bytes in MPU-9150)
+  IMUwriteByte(MPU9250_ADDRESS, USER_CTRL, 0x40);   // Enable FIFO
+  IMUwriteByte(MPU9250_ADDRESS, FIFO_EN, 0x78);     // Enable gyro and accelerometer sensors for FIFO  (max size 512 bytes in MPU-9150)
   delay(40); // accumulate 40 samples in 40 milliseconds = 480 bytes
 
 // At end of sample accumulation, turn off FIFO sensor read
-  writeByte(MPU9250_ADDRESS, FIFO_EN, 0x00);        // Disable gyro and accelerometer sensors for FIFO
+  IMUwriteByte(MPU9250_ADDRESS, FIFO_EN, 0x00);        // Disable gyro and accelerometer sensors for FIFO
   readBytes(MPU9250_ADDRESS, FIFO_COUNTH, 2, &data[0]); // read FIFO sample count
   fifo_count = ((uint16_t)data[0] << 8) | data[1];
   packet_count = fifo_count/12;// How many sets of full gyro and accelerometer data for averaging
@@ -588,12 +588,12 @@ void calibrateMPU9250(float * dest1, float * dest2)
   data[5] = (-gyro_bias[2]/4)       & 0xFF;
 
 // Push gyro biases to hardware registers
-  writeByte(MPU9250_ADDRESS, XG_OFFSET_H, data[0]);
-  writeByte(MPU9250_ADDRESS, XG_OFFSET_L, data[1]);
-  writeByte(MPU9250_ADDRESS, YG_OFFSET_H, data[2]);
-  writeByte(MPU9250_ADDRESS, YG_OFFSET_L, data[3]);
-  writeByte(MPU9250_ADDRESS, ZG_OFFSET_H, data[4]);
-  writeByte(MPU9250_ADDRESS, ZG_OFFSET_L, data[5]);
+  IMUwriteByte(MPU9250_ADDRESS, XG_OFFSET_H, data[0]);
+  IMUwriteByte(MPU9250_ADDRESS, XG_OFFSET_L, data[1]);
+  IMUwriteByte(MPU9250_ADDRESS, YG_OFFSET_H, data[2]);
+  IMUwriteByte(MPU9250_ADDRESS, YG_OFFSET_L, data[3]);
+  IMUwriteByte(MPU9250_ADDRESS, ZG_OFFSET_H, data[4]);
+  IMUwriteByte(MPU9250_ADDRESS, ZG_OFFSET_L, data[5]);
 
 // Output scaled gyro biases for display in the main program
   dest1[0] = (float) gyro_bias[0]/(float) gyrosensitivity;
@@ -661,11 +661,11 @@ void MPU9250SelfTest(float * destination) // Should return percent deviation fro
    float factoryTrim[6];
    uint8_t FS = 0;
 
-  writeByte(MPU9250_ADDRESS, SMPLRT_DIV, 0x00);    // Set gyro sample rate to 1 kHz
-  writeByte(MPU9250_ADDRESS, CONFIG, 0x02);        // Set gyro sample rate to 1 kHz and DLPF to 92 Hz
-  writeByte(MPU9250_ADDRESS, GYRO_CONFIG, 1<<FS);  // Set full scale range for the gyro to 250 dps
-  writeByte(MPU9250_ADDRESS, ACCEL_CONFIG2, 0x02); // Set accelerometer rate to 1 kHz and bandwidth to 92 Hz
-  writeByte(MPU9250_ADDRESS, ACCEL_CONFIG, 1<<FS); // Set full scale range for the accelerometer to 2 g
+  IMUwriteByte(MPU9250_ADDRESS, SMPLRT_DIV, 0x00);    // Set gyro sample rate to 1 kHz
+  IMUwriteByte(MPU9250_ADDRESS, CONFIG, 0x02);        // Set gyro sample rate to 1 kHz and DLPF to 92 Hz
+  IMUwriteByte(MPU9250_ADDRESS, GYRO_CONFIG, 1<<FS);  // Set full scale range for the gyro to 250 dps
+  IMUwriteByte(MPU9250_ADDRESS, ACCEL_CONFIG2, 0x02); // Set accelerometer rate to 1 kHz and bandwidth to 92 Hz
+  IMUwriteByte(MPU9250_ADDRESS, ACCEL_CONFIG, 1<<FS); // Set full scale range for the accelerometer to 2 g
 
   for( int ii = 0; ii < 200; ii++) {  // get average current values of gyro and acclerometer
 
@@ -686,8 +686,8 @@ void MPU9250SelfTest(float * destination) // Should return percent deviation fro
   }
 
 // Configure the accelerometer for self-test
-   writeByte(MPU9250_ADDRESS, ACCEL_CONFIG, 0xE0); // Enable self test on all three axes and set accelerometer range to +/- 2 g
-   writeByte(MPU9250_ADDRESS, GYRO_CONFIG,  0xE0); // Enable self test on all three axes and set gyro range to +/- 250 degrees/s
+   IMUwriteByte(MPU9250_ADDRESS, ACCEL_CONFIG, 0xE0); // Enable self test on all three axes and set accelerometer range to +/- 2 g
+   IMUwriteByte(MPU9250_ADDRESS, GYRO_CONFIG,  0xE0); // Enable self test on all three axes and set gyro range to +/- 250 degrees/s
    delay(25);  // Delay a while to let the device stabilize
 
   for( int ii = 0; ii < 200; ii++) {  // get average self-test values of gyro and acclerometer
@@ -709,17 +709,17 @@ void MPU9250SelfTest(float * destination) // Should return percent deviation fro
   }
 
  // Configure the gyro and accelerometer for normal operation
-   writeByte(MPU9250_ADDRESS, ACCEL_CONFIG, 0x00);
-   writeByte(MPU9250_ADDRESS, GYRO_CONFIG,  0x00);
+   IMUwriteByte(MPU9250_ADDRESS, ACCEL_CONFIG, 0x00);
+   IMUwriteByte(MPU9250_ADDRESS, GYRO_CONFIG,  0x00);
    delay(25);  // Delay a while to let the device stabilize
 
    // Retrieve accelerometer and gyro factory Self-Test Code from USR_Reg
-   selfTest[0] = readByte(MPU9250_ADDRESS, SELF_TEST_X_ACCEL); // X-axis accel self-test results
-   selfTest[1] = readByte(MPU9250_ADDRESS, SELF_TEST_Y_ACCEL); // Y-axis accel self-test results
-   selfTest[2] = readByte(MPU9250_ADDRESS, SELF_TEST_Z_ACCEL); // Z-axis accel self-test results
-   selfTest[3] = readByte(MPU9250_ADDRESS, SELF_TEST_X_GYRO);  // X-axis gyro self-test results
-   selfTest[4] = readByte(MPU9250_ADDRESS, SELF_TEST_Y_GYRO);  // Y-axis gyro self-test results
-   selfTest[5] = readByte(MPU9250_ADDRESS, SELF_TEST_Z_GYRO);  // Z-axis gyro self-test results
+   selfTest[0] = IMUreadByte(MPU9250_ADDRESS, SELF_TEST_X_ACCEL); // X-axis accel self-test results
+   selfTest[1] = IMUreadByte(MPU9250_ADDRESS, SELF_TEST_Y_ACCEL); // Y-axis accel self-test results
+   selfTest[2] = IMUreadByte(MPU9250_ADDRESS, SELF_TEST_Z_ACCEL); // Z-axis accel self-test results
+   selfTest[3] = IMUreadByte(MPU9250_ADDRESS, SELF_TEST_X_GYRO);  // X-axis gyro self-test results
+   selfTest[4] = IMUreadByte(MPU9250_ADDRESS, SELF_TEST_Y_GYRO);  // Y-axis gyro self-test results
+   selfTest[5] = IMUreadByte(MPU9250_ADDRESS, SELF_TEST_Z_GYRO);  // Z-axis gyro self-test results
 
   // Retrieve factory self-test value from self-test code reads
    factoryTrim[0] = (float)(2620/1<<FS)*(pow( 1.01 , ((float)selfTest[0] - 1.0) )); // FT[Xa] factory trim calculation

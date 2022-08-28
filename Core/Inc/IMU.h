@@ -227,7 +227,9 @@ uint8_t getMPU9250ID();
 
 uint8_t getAK8963CID();
 
+void IMUwriteByte(uint8_t address, uint8_t subAddress, uint8_t data);
 
+uint8_t IMUreadByte(uint8_t address, uint8_t subAddress);
 
 float getMres(Mscale mscale);
 

@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "i2c.h"
 #include "spi.h"
 #include "tim.h"
@@ -51,8 +52,6 @@
 /* USER CODE BEGIN PV */
 extern lora_sx1276 LoRa;
 extern BMP280_HandleTypedef bmp280;
-float pressure = 0, bmp280_temperature = 0, humidity = 0;
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -94,37 +93,21 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_I2C1_Init();
   MX_TIM1_Init();
   MX_SPI1_Init();
   MX_I2C3_Init();
+  MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
-  Servo_Init();
+
+  //Servo_Init();
 
   Check_Peripherals();
+  Init_Peripherals();
 
-  uint8_t res = lora_init(&LoRa, &hspi1, LoRa_NSS_GPIO_Port, LoRa_NSS_Pin, LoRa_Reset_GPIO_Port, LoRa_Reset_Pin, LORA_BASE_FREQUENCY_EU);
-  bmp280_init_default_params(&bmp280.params);
-  bmp280.addr = BMP280_I2C_ADDRESS_0;
-  bmp280.i2c = &hi2c3;
-  bool bme280p = bmp280.id == BME280_CHIP_ID;
-  bmp280_init(&bmp280, &bmp280.params);
-
-  //Check_Servos_Manually();
-  bmp280_read_float(&bmp280, &bmp280_temperature, &pressure, &humidity);
-
-  // Claibrate IMU
-//  calibrateMPU9250(gyroBias, accelBias);
-//  magcalMPU9250(magbias, magCalibration);
-//  MPU9250SelfTest(SelfTest);
-//
-//
-//
-//  // Init IMU
-//  resetMPU9250();
-//  initMPU9250(AFS_8G, GFS_250DPS, 1);
-//  MinitAK8963Slave(MFS_16BITS, Mmode, magCalibration);
-
+  Set_LoRa_Connecting(&LoRa);
+  HAL_TIM_Base_Start_IT(&htim16); // start interrupts after device initialization
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -162,8 +145,8 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 2;
-  RCC_OscInitStruct.PLL.PLLN = 8;
+  RCC_OscInitStruct.PLL.PLLM = 1;
+  RCC_OscInitStruct.PLL.PLLN = 10;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
@@ -181,14 +164,25 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
   {
     Error_Handler();
   }
 }
 
 /* USER CODE BEGIN 4 */
+void HAL_GPIO_EXTI_Callback(uint16_t pin){
+	if (pin == LoRa_Interrupt_Pin){
+		LoRa_Receive_interrupt_Handler(&LoRa);
+	}
+}
 
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+	if (htim == &htim16){
+		LoRa_Timer_Interrupt_Handler(&LoRa);
+	}
+}
 /* USER CODE END 4 */
 
 /**
@@ -203,9 +197,9 @@ void Error_Handler(void)
   while (1)
   {
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, 1);
-	  HAL_Delay(200);
+	  HAL_Delay(1000);
 	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4, 0);
-	  HAL_Delay(200);
+	  HAL_Delay(1000);
 
   }
   /* USER CODE END Error_Handler_Debug */

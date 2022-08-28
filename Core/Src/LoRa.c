@@ -86,8 +86,94 @@ lora_sx1276 LoRa; // global lora config type
 
 // Higher level abstractions
 
+// LoRa data receive operations
+
+void LoRa_Receive_interrupt_Handler(lora_sx1276 *lora){
+
+}
 
 
+// LoRa data transmit operations
+
+
+
+/*
+ * Emit till handshake with ground unit (IT driven)
+ * Set global flag.
+ */
+void Set_LoRa_Connecting(lora_sx1276 *lora){
+	lora->lora_status = LORA_CONNECTING;
+}
+
+void Set_LoRa_Connected(lora_sx1276 *lora){
+	lora->lora_status = LORA_CONNCETED;
+}
+
+void Set_LoRa_Broadcast_FLight_Info(lora_sx1276 *lora){
+	lora->lora_status = LORA_BROADCASTING_FLIGHT_DATA;
+}
+
+void Set_LoRa_Disconnected(lora_sx1276 *lora){
+	lora->lora_status = LORA_DISCONNECTED;
+}
+
+// LoRa handlers
+
+// Broadcasting connection message
+static void LoRa_Connecting_Handler(lora_sx1276 *lora){
+	uint8_t payload[LORA_MAX_PACKET_SIZE];
+	payload[0] = 0x10; // device address
+	payload[1] = 0xFF; // command id (need handshake)
+	lora_send_packet(lora, payload, 2);
+}
+
+
+static void LoRa_Connected_Handler(lora_sx1276 *lora){
+
+	Set_LoRa_Broadcast_FLight_Info(lora);
+}
+
+static void LoRa_Disconnected_Handler(lora_sx1276 *lora){
+	Set_LoRa_Connecting(lora);
+}
+
+// broadcasting flight data
+static void LoRa_Broadcast_Flight_Data_Handler(lora_sx1276 *lora, void* flight_data){ // later change the void*
+	uint8_t cs = 9;
+}
+
+
+static void LoRa_Error_Transmit_Handler(lora_sx1276 *lora){
+
+}
+
+/**
+ * Here happens everything which is related to sending data.
+ * Each operating state triggers different handlers.
+ */
+void LoRa_Timer_Interrupt_Handler(lora_sx1276 *lora){
+	switch(lora->lora_status){
+	case LORA_CONNECTING:
+		LoRa_Connecting_Handler(lora);
+	case LORA_CONNCETED:
+		LoRa_Connected_Handler(lora);
+	case LORA_BROADCASTING_FLIGHT_DATA:
+		LoRa_Broadcast_Flight_Data_Handler(lora, (uint8_t*)12);
+	case LORA_DISCONNECTED:
+		LoRa_Disconnected_Handler(lora);
+	case LORA_ROCKET_ERROR_TRANSMIT:
+		LoRa_Error_Transmit_Handler(lora);
+	}
+}
+
+/**
+ * Making sure if program does not execute anything while disconnected from LoRa
+ */
+void Wait_For_LoRa_Connection(lora_sx1276 *lora){
+	// Interrupt event when packet received changes the value, exists from while
+	while (lora->lora_status == LORA_CONNECTING){
+	}
+}
 
 // SPI helpers //
 
@@ -685,7 +771,7 @@ void lora_reset(lora_sx1276 *lora){
 }
 
 uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
-    uint16_t nss_pin, GPIO_TypeDef *reset_port, uint16_t reset_pin,  uint64_t freq)
+    uint16_t nss_pin, GPIO_TypeDef *reset_port, uint16_t reset_pin,  uint64_t freq, uint8_t dev_add)
 {
   assert_param(lora && spi);
 

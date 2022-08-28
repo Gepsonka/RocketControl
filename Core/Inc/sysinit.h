@@ -20,7 +20,9 @@
 
 #define Are_Servos_Available() __Test_Servos()
 
-void Check_Pheriperials();
+void Check_Peripherals();
+
+void Init_Peripherals();
 
 bool Is_BMP280_Available();
 
@@ -37,6 +39,10 @@ void Init_IMU();
 void Calibrate_BMP280();
 
 void Calibrate_IMU();
+
+void Set_Connect_LoRa_Ground_Unit();
+
+
 
 
 

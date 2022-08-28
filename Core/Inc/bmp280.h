@@ -137,6 +137,11 @@ typedef struct {
 } BMP280_HandleTypedef;
 
 
+typedef struct {
+	float temperature;
+	float pressure;
+	float humidity;
+} Altimeter_Data;
 
 
 /**
