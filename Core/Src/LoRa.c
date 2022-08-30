@@ -122,29 +122,48 @@ void Set_LoRa_Disconnected(lora_sx1276 *lora){
 // Broadcasting connection message
 static void LoRa_Connecting_Handler(lora_sx1276 *lora){
 	uint8_t payload[LORA_MAX_PACKET_SIZE];
-	payload[0] = 0x10; // device address
-	payload[1] = 0xFF; // command id (need handshake)
+	payload[0] = LORA_DEVICE_ADDRESS; // device address
+	payload[1] = 0xFF; // command id (request handshake)
 	uint8_t res = lora_send_packet(lora, payload, 2);
+	lora_mode_receive_continuous(lora);
 }
 
 
+/**
+ * Connected handler.
+ * Executes when handshake between the devices happens
+ */
 static void LoRa_Connected_Handler(lora_sx1276 *lora){
-
 	Set_LoRa_Broadcast_FLight_Info(lora);
 }
 
+/**
+ * Disconnected handler.
+ * Executes in case of connection is lost with the devices.
+ */
 static void LoRa_Disconnected_Handler(lora_sx1276 *lora){
 	Set_LoRa_Connecting(lora);
 }
 
-// broadcasting flight data
+
+/**
+ * Broadcasting flight data to the ground unit
+ */
 static void LoRa_Broadcast_Flight_Data_Handler(lora_sx1276 *lora, void* flight_data){ // later change the void*
 	uint8_t cs = 9;
 }
 
 
+/**
+ * device error state with message, broadcasted and displayed on the LCD.
+ */
 static void LoRa_Error_Transmit_Handler(lora_sx1276 *lora){
-
+	uint8_t payload[LORA_MAX_PACKET_SIZE];
+	payload[0] = LORA_DEVICE_ADDRESS;
+	payload[1] = LORA_ERROR_CMD;
+	memcpy(&payload[2], lora->error_msg, strlen(lora->error_msg));
+	uint8_t res = lora_send_packet(lora, payload, strlen(lora->error_msg) + 2);
+	lora_mode_receive_continuous(lora);
 }
 
 /**
@@ -776,7 +795,7 @@ void lora_reset(lora_sx1276 *lora){
 }
 
 uint8_t lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
-    uint16_t nss_pin, GPIO_TypeDef *reset_port, uint16_t reset_pin,  uint64_t freq, uint8_t dev_add)
+    uint16_t nss_pin, GPIO_TypeDef *reset_port, uint16_t reset_pin,  uint64_t freq)
 {
   assert_param(lora && spi);
 

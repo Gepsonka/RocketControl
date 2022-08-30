@@ -5,10 +5,11 @@
 #define __LORA_H
 
 #include "main.h"
+#include "string.h"
 
 #define LORA_MAX_PACKET_SIZE               128
 
-#define DEVICE_LORA_ADD 0x10;
+#define LORA_DEVICE_ADDRESS 0x10;
 
 // Operational frequency
 #define MHZ                                1000000LLU
@@ -43,6 +44,20 @@
 #define LORA_CODING_RATE_4_6               0x10
 #define LORA_CODING_RATE_4_7               0x18
 #define LORA_CODING_RATE_4_8               0x20
+
+// LORA transmit Commands
+#define LORA_ERROR_CMD 0x00
+#define LORA_REQUEST_HANDSHAKE_CMD 0xFF
+#define LORA_SEND_FLIGHT_DATA_CMD 0x01
+#define LORA_IS_LAUNCHED_CMD 0x02
+#define LORA_IS_ON_GROUND_CMD 0x03
+
+
+// LORA receive commands
+#define LORA_HANDSHAKE_RECEIVE_CMD 0xFF
+#define LORA_ERROR_RECEIVE_CMD 0x00
+#define LORA_CHANGE_DIRECTION 0X01
+
 
 // Signal bandwidth ("spread factor")
 enum {
@@ -103,11 +118,9 @@ typedef struct {
 
   uint16_t reset_pin;
 
-  uint8_t device_add;
-
   volatile LoRa_Status lora_status;
 
-  char error_msg[80]; // 80 char can be displayed on the LCD when displaying error
+  volatile char error_msg[80]; // 80 char can be displayed on the LCD when displaying error
 
 } lora_sx1276;
 
@@ -138,7 +151,7 @@ void Wait_For_LoRa_Connection(lora_sx1276 *lora);
 //  - `LORA_OK` - modem initialized successfully
 //  - `LORA_ERROR` - initialization failed (e.g. no modem present on SPI bus / wrong NSS port/pin)
 uint8_t  lora_init(lora_sx1276 *lora, SPI_HandleTypeDef *spi, GPIO_TypeDef *nss_port,
-                   uint16_t nss_pin, GPIO_TypeDef *reset_port, uint16_t reset_pin, uint64_t freq, uint8_t dev_add);
+                   uint16_t nss_pin, GPIO_TypeDef *reset_port, uint16_t reset_pin, uint64_t freq);
 
 // Returns LoRa modem version number (usually 0x12)
 uint8_t  lora_version(lora_sx1276 *lora);

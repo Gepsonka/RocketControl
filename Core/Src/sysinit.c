@@ -11,7 +11,7 @@
 
 extern lora_sx1276 LoRa;
 extern BMP280_HandleTypedef bmp280;
-extern float gyroBias[3], accelBias[3], magCalibration[3];
+extern float gyroBias[3], accelBias[3], magCalibration[3], SelfTest[6];
 
 /*
  * Check peripherals, if an essential peripherals
@@ -90,7 +90,7 @@ bool Is_LoRa_Available(){
 
 
 void Init_LoRa(){
-	lora_init(&LoRa, &hspi1, LoRa_NSS_GPIO_Port, LoRa_NSS_Pin, LoRa_Reset_GPIO_Port, LoRa_Reset_Pin, LORA_BASE_FREQUENCY_EU, 0x10);
+	lora_init(&LoRa, &hspi1, LoRa_NSS_GPIO_Port, LoRa_NSS_Pin, LoRa_Reset_GPIO_Port, LoRa_Reset_Pin, LORA_BASE_FREQUENCY_EU);
 	lora_set_tx_power(&LoRa, 17);
 	lora_set_signal_bandwidth(&LoRa, LORA_BANDWIDTH_7_8_KHZ);
 	lora_set_spreading_factor(&LoRa, 12);
@@ -116,6 +116,8 @@ void Init_IMU(){
 		uint8_t res = IMUreadByte(MPU9250_ADDRESS, WHO_AM_I_MPU9250);
 		Error_Handler();
 	}
+
+	MPU9250SelfTest(SelfTest);
 
 	initMPU9250(AFS_8G, GFS_250DPS, 7); // sample rate  SAMPLE_RATE = Internal_Sample_Rate / (1 + 7) = 1kHz
 	MinitAK8963Slave(MFS_16BITS, 6, magCalibration);

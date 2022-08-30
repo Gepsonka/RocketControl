@@ -52,6 +52,7 @@
 /* USER CODE BEGIN PV */
 extern lora_sx1276 LoRa;
 extern BMP280_HandleTypedef bmp280;
+extern float accelBias[3], gyroBias[3];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -107,7 +108,9 @@ int main(void)
   Init_Peripherals();
 
   Set_LoRa_Connecting(&LoRa);
+  calibrateMPU9250(gyroBias, accelBias);
   HAL_TIM_Base_Start_IT(&htim16); // start interrupts after device initialization
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
